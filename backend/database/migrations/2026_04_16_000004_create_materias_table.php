@@ -11,6 +11,8 @@ return new class extends Migration
         Schema::create('materias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre', 150);
+            $table->integer('horas_semanales')->unsigned()->default(3);
+            $table->foreignId('modulo_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }

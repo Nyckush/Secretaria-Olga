@@ -1,0 +1,85 @@
+@startuml SistemaAcademico
+
+!define PRIMARY_KEY(x) <color:red><b>PK: x</b></color>
+!define FOREIGN_KEY(x) <color:blue><b>FK: x</b></color>
+
+entity "anexos" as anexos {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(100) [UNIQUE]
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "cursos" as cursos {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(anexo_id) : bigint
+  nombre : varchar(100)
+  division : varchar(10)
+  turno : enum(Mañana, Tarde, Noche)
+  ciclo_lectivo : year
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "etapas" as etapas {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(50)
+  orden : tinyint
+}
+
+entity "curso_etapa" as curso_etapa {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(curso_id) : bigint
+  FOREIGN_KEY(etapa_id) : bigint
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "modulos" as modulos {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(255)
+  cursado : tinyint (1, 2, 3)
+  horas_total : int [default 30]
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "materias" as materias {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(150)
+  horas_semanales : int [default 3]
+  FOREIGN_KEY(modulo_id) : bigint
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "docentes" as docentes {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(100)
+  apellido : varchar(100)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "horarios" as horarios {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(curso_etapa_id) : bigint
+  FOREIGN_KEY(materia_id) : bigint
+  FOREIGN_KEY(docente_id) : bigint
+  dia_semana : enum(Lunes, Martes, Miércoles, Jueves, Viernes)
+  hora_catedra : tinyint
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' Relaciones
+anexos ||--o{ cursos : "tiene"
+cursos ||--o{ curso_etapa : "se divide en"
+etapas ||--o{ curso_etapa : "define"
+curso_etapa ||--o{ horarios : "tiene"
+
+modulos ||--o{ materias : "contiene"
+materias ||--o{ horarios : "se dicta"
+docentes ||--o{ horarios : "imparte"
+
+@enduml
