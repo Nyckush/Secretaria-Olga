@@ -10,8 +10,14 @@ return new class extends Migration
     {
         Schema::create('docentes', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre', 100);
+            $table->string('nombre', 100)->nullable();
             $table->string('apellido', 100);
+            $table->string('email', 100)->nullable()->unique();
+            $table->string('telefono', 20)->nullable();
+            $table->string('direccion', 255)->nullable();
+            $table->string('dni', 8)->unique();
+            $table->string('cuil', 11)->unique();
+            
             $table->timestamps();
         });
     }

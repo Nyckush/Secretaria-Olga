@@ -12,6 +12,12 @@ class Docente extends Model
     protected $fillable = [
         'nombre',
         'apellido',
+        'email',
+        'telefono',
+        'direccion',
+        'dni',
+        'cuil',
+
     ];
 
     public function horarios(): HasMany
