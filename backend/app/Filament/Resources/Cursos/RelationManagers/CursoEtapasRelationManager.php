@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Cursos\RelationManagers;
 
 use App\Models\Etapa;
 use App\Models\Modulo;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -67,6 +68,10 @@ class CursoEtapasRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->recordActions([
+                Action::make('horarios')
+                    ->label('Horarios')
+                    ->url(fn ($record): string => route('curso-etapas.horarios', ['cursoEtapa' => $record]))
+                    ->openUrlInNewTab(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])

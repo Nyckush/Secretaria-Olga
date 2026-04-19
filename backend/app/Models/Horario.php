@@ -10,6 +10,7 @@ class Horario extends Model
     protected $table = 'horarios';
 
     protected $fillable = [
+        'asignacion_docente_id',
         'curso_etapa_materia_id',
         'docente_id',
         'bloque_id',
@@ -22,14 +23,9 @@ class Horario extends Model
         'fecha_desde' => 'date',
     ];
 
-    public function cursoEtapaMateria(): BelongsTo
+    public function asignacionDocente(): BelongsTo
     {
-        return $this->belongsTo(CursoEtapaMateria::class);
-    }
-
-    public function docente(): BelongsTo
-    {
-        return $this->belongsTo(Docente::class);
+        return $this->belongsTo(AsignacionDocente::class);
     }
 
     public function bloque(): BelongsTo

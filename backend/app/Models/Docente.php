@@ -24,4 +24,9 @@ class Docente extends Model
     {
         return $this->hasMany(Horario::class);
     }
+
+    public function asignacionesDocentes(): HasMany
+    {
+        return $this->hasMany(AsignacionDocente::class);
+    }
 }

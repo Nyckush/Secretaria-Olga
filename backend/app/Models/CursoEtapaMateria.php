@@ -13,6 +13,7 @@ class CursoEtapaMateria extends Model
     protected $fillable = [
         'curso_etapa_id',
         'curso_materia_id',
+        'horas_catedra',
     ];
 
     public function cursoEtapa(): BelongsTo
@@ -28,5 +29,10 @@ class CursoEtapaMateria extends Model
     public function horarios(): HasMany
     {
         return $this->hasMany(Horario::class);
+    }
+
+    public function asignacionesDocentes(): HasMany
+    {
+        return $this->hasMany(AsignacionDocente::class);
     }
 }

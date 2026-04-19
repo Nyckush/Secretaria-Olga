@@ -91,6 +91,16 @@ entity "bloques_horarios" as bloques_horarios {
   hora_fin : time
 }
 
+entity "asignaciones_docentes" as asignaciones_docentes {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(curso_etapa_materia_id) : bigint
+  FOREIGN_KEY(docente_id) : bigint
+  fecha_desde : date
+  hasta : varchar(50)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
 entity "horarios" as horarios {
   PRIMARY_KEY(id) : bigint
   FOREIGN_KEY(curso_etapa_materia_id) : bigint
@@ -117,5 +127,7 @@ docentes ||--o{ horarios : "imparte"
 bloques_horarios ||--o{ horarios : "define bloque"
 
 modulos ||--o{ materias : "contiene"
+curso_etapa_materia ||--o{ asignaciones_docentes : "tiene"
+docentes ||--o{ asignaciones_docentes : "es asignado en"
 
 @enduml

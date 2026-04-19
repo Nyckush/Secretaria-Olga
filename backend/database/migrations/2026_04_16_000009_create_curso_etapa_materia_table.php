@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('curso_etapa_id')->constrained('curso_etapa')->cascadeOnDelete();
             $table->foreignId('curso_materia_id')->constrained('curso_materia')->cascadeOnDelete();
+            $table->unsignedTinyInteger('horas_catedra')->default(0);
             $table->timestamps();
         });
     }
