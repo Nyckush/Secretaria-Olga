@@ -15,10 +15,16 @@ class Materia extends Model
         'modulo_id',
     ];
 
-    public function horarios(): HasMany
+    public function cursoEtapaMaterias(): HasMany
     {
-        return $this->hasMany(Horario::class);
+        return $this->hasMany(CursoEtapaMateria::class);
     }
+
+    public function cursoMaterias(): HasMany
+    {
+        return $this->hasMany(CursoMateria::class);
+    }
+
     public function modulo()
     {
         return $this->belongsTo(Modulo::class);

@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             AnexoSeeder::class,
             ModuloSeeder::class,
             MateriaSeeder::class,
+            EtapaSeeder::class,
+            BloqueHorarioSeeder::class,
         ]);
 
         // User::factory(10)->create();

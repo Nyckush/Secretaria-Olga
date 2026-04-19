@@ -10,25 +10,30 @@ class Horario extends Model
     protected $table = 'horarios';
 
     protected $fillable = [
-        'curso_etapa_id',
-        'materia_id',
+        'curso_etapa_materia_id',
         'docente_id',
+        'bloque_id',
         'dia_semana',
-        'hora_catedra',
+        'fecha_desde',
+        'hasta',
     ];
 
-    public function cursoEtapa(): BelongsTo
-    {
-        return $this->belongsTo(CursoEtapa::class);
-    }
+    protected $casts = [
+        'fecha_desde' => 'date',
+    ];
 
-    public function materia(): BelongsTo
+    public function cursoEtapaMateria(): BelongsTo
     {
-        return $this->belongsTo(Materia::class);
+        return $this->belongsTo(CursoEtapaMateria::class);
     }
 
     public function docente(): BelongsTo
     {
         return $this->belongsTo(Docente::class);
+    }
+
+    public function bloque(): BelongsTo
+    {
+        return $this->belongsTo(BloqueHorario::class, 'bloque_id');
     }
 }

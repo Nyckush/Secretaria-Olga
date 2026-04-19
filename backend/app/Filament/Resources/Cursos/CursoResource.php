@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Cursos;
 use App\Filament\Resources\Cursos\Pages\CreateCurso;
 use App\Filament\Resources\Cursos\Pages\EditCurso;
 use App\Filament\Resources\Cursos\Pages\ListCursos;
+use App\Filament\Resources\Cursos\RelationManagers\CursoEtapasRelationManager;
+use App\Filament\Resources\Cursos\RelationManagers\CursoMateriasRelationManager;
 use App\Filament\Resources\Cursos\Schemas\CursoForm;
 use App\Filament\Resources\Cursos\Tables\CursosTable;
 use App\Models\Curso;
@@ -40,7 +42,8 @@ class CursoResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            CursoEtapasRelationManager::class,
+            CursoMateriasRelationManager::class,
         ];
     }
 

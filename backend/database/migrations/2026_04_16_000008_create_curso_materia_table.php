@@ -8,17 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('curso_etapa', function (Blueprint $table) {
+        Schema::create('curso_materia', function (Blueprint $table) {
             $table->id();
             $table->foreignId('curso_id')->constrained('cursos')->cascadeOnDelete();
-            $table->foreignId('etapa_id')->constrained('etapas')->cascadeOnDelete();
-            $table->foreignId('modulo_id')->nullable()->constrained('modulos')->cascadeOnDelete();
+            $table->foreignId('materia_id')->constrained('materias')->cascadeOnDelete();
+            $table->integer('nro_cupof')->unique()->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('curso_etapa');
+        Schema::dropIfExists('curso_materia');
     }
 };

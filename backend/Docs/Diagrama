@@ -31,6 +31,24 @@ entity "curso_etapa" as curso_etapa {
   PRIMARY_KEY(id) : bigint
   FOREIGN_KEY(curso_id) : bigint
   FOREIGN_KEY(etapa_id) : bigint
+  FOREIGN_KEY(modulo_id) : bigint [NULL]
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "curso_materia" as curso_materia {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(curso_id) : bigint
+  FOREIGN_KEY(materia_id) : bigint
+  nro_cupof : int [UNIQUE]
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "curso_etapa_materia" as curso_etapa_materia {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(curso_etapa_id) : bigint
+  FOREIGN_KEY(curso_materia_id) : bigint
   created_at : timestamp
   updated_at : timestamp
 }
@@ -55,19 +73,32 @@ entity "materias" as materias {
 
 entity "docentes" as docentes {
   PRIMARY_KEY(id) : bigint
-  nombre : varchar(100)
+  nombre : varchar(100) [NULL]
   apellido : varchar(100)
+  email : varchar(100) [UNIQUE, NULL]
+  telefono : varchar(20) [NULL]
+  direccion : varchar(255) [NULL]
+  dni : varchar(8) [UNIQUE]
+  cuil : varchar(11) [UNIQUE]
   created_at : timestamp
   updated_at : timestamp
 }
 
+entity "bloques_horarios" as bloques_horarios {
+  PRIMARY_KEY(id) : tinyint
+  orden : tinyint [UNIQUE]
+  hora_inicio : time
+  hora_fin : time
+}
+
 entity "horarios" as horarios {
   PRIMARY_KEY(id) : bigint
-  FOREIGN_KEY(curso_etapa_id) : bigint
-  FOREIGN_KEY(materia_id) : bigint
+  FOREIGN_KEY(curso_etapa_materia_id) : bigint
   FOREIGN_KEY(docente_id) : bigint
+  FOREIGN_KEY(bloque_id) : tinyint
   dia_semana : enum(Lunes, Martes, Miércoles, Jueves, Viernes)
-  hora_catedra : tinyint
+  fecha_desde : date
+  hasta : varchar(50)
   created_at : timestamp
   updated_at : timestamp
 }
@@ -76,10 +107,15 @@ entity "horarios" as horarios {
 anexos ||--o{ cursos : "tiene"
 cursos ||--o{ curso_etapa : "se divide en"
 etapas ||--o{ curso_etapa : "define"
-curso_etapa ||--o{ horarios : "tiene"
+modulos ||--o{ curso_etapa : "asigna"
+cursos ||--o{ curso_materia : "tiene"
+materias ||--o{ curso_materia : "se asigna"
+curso_etapa ||--o{ curso_etapa_materia : "incluye"
+curso_materia ||--o{ curso_etapa_materia : "pertenece a"
+curso_etapa_materia ||--o{ horarios : "tiene"
+docentes ||--o{ horarios : "imparte"
+bloques_horarios ||--o{ horarios : "define bloque"
 
 modulos ||--o{ materias : "contiene"
-materias ||--o{ horarios : "se dicta"
-docentes ||--o{ horarios : "imparte"
 
 @enduml
