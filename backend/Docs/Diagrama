@@ -40,6 +40,7 @@ entity "curso_materia" as curso_materia {
   PRIMARY_KEY(id) : bigint
   FOREIGN_KEY(curso_id) : bigint
   FOREIGN_KEY(materia_id) : bigint
+  periodo : enum(A, C1, C2) [default A]
   nro_cupof : int [UNIQUE]
   created_at : timestamp
   updated_at : timestamp
@@ -95,6 +96,7 @@ entity "asignaciones_docentes" as asignaciones_docentes {
   PRIMARY_KEY(id) : bigint
   FOREIGN_KEY(curso_etapa_materia_id) : bigint
   FOREIGN_KEY(docente_id) : bigint
+  situacion_revista : enum(INT, SUP, PRO) [default INT]
   fecha_desde : date
   hasta : varchar(50)
   created_at : timestamp
@@ -103,6 +105,7 @@ entity "asignaciones_docentes" as asignaciones_docentes {
 
 entity "horarios" as horarios {
   PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(asignacion_docente_id) : bigint [NULL]
   FOREIGN_KEY(curso_etapa_materia_id) : bigint
   FOREIGN_KEY(docente_id) : bigint
   FOREIGN_KEY(bloque_id) : tinyint
@@ -123,6 +126,7 @@ materias ||--o{ curso_materia : "se asigna"
 curso_etapa ||--o{ curso_etapa_materia : "incluye"
 curso_materia ||--o{ curso_etapa_materia : "pertenece a"
 curso_etapa_materia ||--o{ horarios : "tiene"
+asignaciones_docentes ||--o{ horarios : "se refleja en"
 docentes ||--o{ horarios : "imparte"
 bloques_horarios ||--o{ horarios : "define bloque"
 

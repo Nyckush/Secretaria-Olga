@@ -13,6 +13,7 @@ class AsignacionDocente extends Model
     protected $fillable = [
         'curso_etapa_materia_id',
         'docente_id',
+        'situacion_revista',
         'fecha_desde',
         'hasta',
     ];

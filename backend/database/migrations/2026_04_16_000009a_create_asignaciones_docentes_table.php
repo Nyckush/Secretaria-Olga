@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('curso_etapa_materia_id')->constrained('curso_etapa_materia')->cascadeOnDelete();
             $table->foreignId('docente_id')->constrained('docentes')->cascadeOnDelete();
+            $table->enum('situacion_revista', ['INT', 'SUP', 'PRO'])->default('INT');
             $table->date('fecha_desde');
             $table->string('hasta', 50);
             $table->timestamps();

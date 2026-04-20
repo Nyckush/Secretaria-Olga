@@ -193,6 +193,7 @@
                             <tr>
                                 <th>Materia</th>
                                 <th>Docente</th>
+                                <th>Situación revista</th>
                                 <th>Horas Cátedra</th>
                                 <th>Fecha desde</th>
                                 <th>Hasta</th>
@@ -204,6 +205,7 @@
                                     $materiaId = $cursoEtapaMateria->id;
                                     $asignacionActual = $asignacionesPorMateria[$materiaId] ?? null;
                                     $docenteValue = old("asignaciones.$materiaId.docente_id", data_get($asignacionActual, 'docente_id'));
+                                    $situacionRevistaValue = old("asignaciones.$materiaId.situacion_revista", data_get($asignacionActual, 'situacion_revista', 'INT'));
                                     $horasCatedraValue = old("asignaciones.$materiaId.horas_catedra", $cursoEtapaMateria->horas_catedra ?? 0);
                                     $fechaDesdeRaw = old("asignaciones.$materiaId.fecha_desde", data_get($asignacionActual, 'fecha_desde'));
                                     $fechaDesdeValue = filled($fechaDesdeRaw) ? explode('T', (string) $fechaDesdeRaw)[0] : null;
@@ -221,6 +223,13 @@
                                                     {{ $docente->apellido }}, {{ $docente->nombre }}
                                                 </option>
                                             @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="asignaciones[{{ $materiaId }}][situacion_revista]">
+                                            <option value="INT" @selected((string) $situacionRevistaValue === 'INT')>INT - Titular</option>
+                                            <option value="SUP" @selected((string) $situacionRevistaValue === 'SUP')>SUP - Suplente</option>
+                                            <option value="PRO" @selected((string) $situacionRevistaValue === 'PRO')>PRO - Provisional</option>
                                         </select>
                                     </td>
                                     <td>
@@ -252,7 +261,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5">No hay materias cargadas para esta etapa.</td>
+                                    <td colspan="6">No hay materias cargadas para esta etapa.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -36,6 +36,8 @@ class CursoEtapa extends Model
                 CursoMateria::firstOrCreate([
                     'curso_id' => $cursoEtapa->curso_id,
                     'materia_id' => $materiaId,
+                ], [
+                    'periodo' => 'A',
                 ]);
             }
         });

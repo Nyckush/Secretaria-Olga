@@ -13,6 +13,7 @@ class CursoMateria extends Model
     protected $fillable = [
         'curso_id',
         'materia_id',
+        'periodo',
         'nro_cupof',
     ];
 

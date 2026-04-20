@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('horarios', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('asignacion_docente_id')->nullable()->constrained('asignaciones_docentes')->cascadeOnDelete();
             $table->foreignId('curso_etapa_materia_id')->constrained('curso_etapa_materia')->cascadeOnDelete();
             $table->foreignId('docente_id')->constrained('docentes')->cascadeOnDelete();
             $table->unsignedTinyInteger('bloque_id');

@@ -54,7 +54,7 @@ class CursoEtapaHorarioController extends Controller
             ])
             ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
             ->orderByDesc('id')
-            ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'fecha_desde', 'hasta']);
+            ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'situacion_revista', 'fecha_desde', 'hasta']);
 
         $asignacionesPorMateria = $asignaciones
             ->groupBy('curso_etapa_materia_id')
@@ -108,6 +108,7 @@ class CursoEtapaHorarioController extends Controller
                 'asignaciones' => ['nullable', 'array'],
                 'asignaciones.*' => ['array'],
                 'asignaciones.*.docente_id' => ['nullable', 'integer'],
+                'asignaciones.*.situacion_revista' => ['nullable', 'in:INT,SUP,PRO'],
                 'asignaciones.*.horas_catedra' => ['nullable', 'integer', 'min:0', 'max:255'],
                 'asignaciones.*.fecha_desde' => ['nullable', 'date'],
                 'asignaciones.*.hasta' => ['nullable', 'string', 'max:50'],
@@ -125,17 +126,18 @@ class CursoEtapaHorarioController extends Controller
                 }
 
                 $docenteId = data_get($asignacion, 'docente_id');
+                $situacionRevista = data_get($asignacion, 'situacion_revista');
                 $fechaDesde = data_get($asignacion, 'fecha_desde');
                 $hasta = data_get($asignacion, 'hasta');
 
-                $hayDatosAsignacion = filled($docenteId) || filled($fechaDesde) || filled($hasta);
+                $hayDatosAsignacion = filled($docenteId) || filled($situacionRevista) || filled($fechaDesde) || filled($hasta);
 
                 if (! $hayDatosAsignacion) {
                     continue;
                 }
 
-                if (blank($docenteId) || blank($fechaDesde) || blank($hasta)) {
-                    $validator->errors()->add("asignaciones.$cursoEtapaMateriaId", 'Completa docente, fecha desde y hasta para la asignación.');
+                if (blank($docenteId) || blank($situacionRevista) || blank($fechaDesde) || blank($hasta)) {
+                    $validator->errors()->add("asignaciones.$cursoEtapaMateriaId", 'Completa docente, situación de revista, fecha desde y hasta para la asignación.');
                     continue;
                 }
 
@@ -176,6 +178,7 @@ class CursoEtapaHorarioController extends Controller
             $inputAsignacion = data_get($data, "asignaciones.$cursoEtapaMateriaId", []);
             $horasCatedra = blank($inputAsignacion['horas_catedra'] ?? null) ? 0 : (int) $inputAsignacion['horas_catedra'];
             $docenteId = blank($inputAsignacion['docente_id'] ?? null) ? null : (int) $inputAsignacion['docente_id'];
+            $situacionRevista = blank($inputAsignacion['situacion_revista'] ?? null) ? 'INT' : (string) $inputAsignacion['situacion_revista'];
             $fechaDesde = $inputAsignacion['fecha_desde'] ?? null;
             $hasta = $inputAsignacion['hasta'] ?? null;
             $asignacionesMateria = $asignacionesExistentes->get($cursoEtapaMateriaId, collect())->sortByDesc('id')->values();
@@ -203,6 +206,7 @@ class CursoEtapaHorarioController extends Controller
             $payloadAsignacion = [
                 'curso_etapa_materia_id' => $cursoEtapaMateriaId,
                 'docente_id' => $docenteId,
+                'situacion_revista' => $situacionRevista,
                 'fecha_desde' => $fechaDesde,
                 'hasta' => $hasta,
             ];
@@ -222,7 +226,7 @@ class CursoEtapaHorarioController extends Controller
 
         $asignacionesVigentes = AsignacionDocente::query()
             ->whereIn('id', $asignacionIdsVigentes)
-            ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'fecha_desde', 'hasta'])
+            ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'situacion_revista', 'fecha_desde', 'hasta'])
             ->keyBy('id');
 
         $horariosExistentes = Horario::query()

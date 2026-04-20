@@ -100,6 +100,16 @@ class CursoMateriasRelationManager extends RelationManager
                             $query->whereIn('modulo_id', $moduloIds);
                         });
                     }),
+                Select::make('periodo')
+                    ->label('Periodo')
+                    ->options([
+                        'A' => 'Anual',
+                        'C1' => 'Cuatrimestre 1',
+                        'C2' => 'Cuatrimestre 2',
+                    ])
+                    ->default('A')
+                    ->required()
+                    ->native(false),
                 TextInput::make('nro_cupof')
                     ->label('Nro Cupof')
                     ->numeric()
@@ -123,6 +133,15 @@ class CursoMateriasRelationManager extends RelationManager
                     ->badge()
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('periodo')
+                    ->label('Periodo')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'C1' => 'Cuatrimestre 1',
+                        'C2' => 'Cuatrimestre 2',
+                        default => 'Anual',
+                    })
+                    ->sortable(),
                 TextColumn::make('nro_cupof')
                     ->label('Nro Cupof')
                     ->sortable()
