@@ -1,4 +1,31 @@
-Descripcion :
+Tareas Pendientes 
 
-Laravel v12
-Filamen v4
+Agregar el Campo Int Situacion de Revista  -->  Titular : 
+  INT  --> Titular (Default)
+  SUP  --> Suplente  Rempalaza al Interino 
+  PRO  --> Provisional Cuando no hay Docente asignado para la Materia Usan un docente Provisional
+
+
+Agregar el Campo A -C1-C2
+
+  A-anual 
+  C1 -1ª Cuatrimestre
+  C2 -2ª Cuatrimestre
+
+rubrica en tps
+asistencias en los dias no Trabajado 
+quitar el alumno del curso
+
+
+
+
+Moviento Historia de la Materia solo lo que estan dado de baja 
+  Docente
+  Titulos varios Campos
+  nª de legajo en Junta provincual --> String
+  Cobra asignaciones familiares en la inst. --> si y No 
+  si trabaja en otras instituciones  --> si y No 
+  si tiene el beneficion abono docente.
+  Antiguedad como  Docente   
+  Antiguedad en la institucion
+  Materia Frente 
