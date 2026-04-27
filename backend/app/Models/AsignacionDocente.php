@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -35,5 +36,27 @@ class AsignacionDocente extends Model
     public function horarios(): HasMany
     {
         return $this->hasMany(Horario::class);
+    }
+
+    public function bajas()
+    {
+        return $this->hasMany(BajaAsignacionDocente::class, 'asignacion_docente_id');
+    }
+
+    public function scopeActivas(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('bajas');
+    }
+
+    public function scopeConBaja(Builder $query): Builder
+    {
+        return $query->whereHas('bajas');
+    }
+
+    public function hasBajaRegistrada(): bool
+    {
+        return $this->relationLoaded('bajas')
+            ? $this->bajas->isNotEmpty()
+            : $this->bajas()->exists();
     }
 }

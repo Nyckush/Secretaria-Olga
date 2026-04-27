@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Docentes;
 use App\Filament\Resources\Docentes\Pages\CreateDocente;
 use App\Filament\Resources\Docentes\Pages\EditDocente;
 use App\Filament\Resources\Docentes\Pages\ListDocentes;
+use App\Filament\Resources\Docentes\RelationManagers\AsignacionesDocentesRelationManager;
 use App\Filament\Resources\Docentes\Schemas\DocenteForm;
 use App\Filament\Resources\Docentes\Tables\DocentesTable;
 use App\Models\Docente;
@@ -44,7 +45,7 @@ class DocenteResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            AsignacionesDocentesRelationManager::class,
         ];
     }
 

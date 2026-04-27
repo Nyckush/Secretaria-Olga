@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\AsignacionesDocentes\Schemas;
 
+use App\Models\AsignacionDocente;
 use App\Models\CursoEtapaMateria;
 use App\Models\Docente;
+use Closure;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -44,6 +46,23 @@ class AsignacionDocenteForm
                     )
                     ->searchable()
                     ->preload()
+                    ->rule(function ($record) {
+                        return function (string $attribute, $value, Closure $fail) use ($record): void {
+                            if (blank($value)) {
+                                return;
+                            }
+
+                            $existeAsignacionActiva = AsignacionDocente::query()
+                                ->activas()
+                                ->where('curso_etapa_materia_id', $value)
+                                ->when($record, fn ($query) => $query->whereKeyNot($record->getKey()))
+                                ->exists();
+
+                            if ($existeAsignacionActiva) {
+                                $fail('Esta materia ya tiene una asignación activa. Primero debes dar de baja la actual para poder reasignarla.');
+                            }
+                        };
+                    })
                     ->required(),
                 Select::make('docente_id')
                     ->label('Docente')

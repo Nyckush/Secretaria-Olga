@@ -53,6 +53,7 @@ class CursoEtapaHorarioController extends Controller
                 'docente:id,nombre,apellido',
             ])
             ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
+            ->activas()
             ->orderByDesc('id')
             ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'situacion_revista', 'fecha_desde', 'hasta']);
 
@@ -148,6 +149,7 @@ class CursoEtapaHorarioController extends Controller
 
             $asignacionIdsValidas = AsignacionDocente::query()
                 ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
+                ->activas()
                 ->pluck('id');
 
             foreach (self::DIAS_SEMANA as $dia) {
@@ -168,6 +170,7 @@ class CursoEtapaHorarioController extends Controller
         $data = $validator->validate();
 
         $asignacionesExistentes = AsignacionDocente::query()
+            ->with(['bajas'])
             ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
             ->get()
             ->groupBy('curso_etapa_materia_id');
@@ -183,6 +186,10 @@ class CursoEtapaHorarioController extends Controller
             $hasta = $inputAsignacion['hasta'] ?? null;
             $asignacionesMateria = $asignacionesExistentes->get($cursoEtapaMateriaId, collect())->sortByDesc('id')->values();
 
+            // Separar activas (sin baja) de históricas (con baja) — las históricas nunca se tocan
+            $asignacionesActivas = $asignacionesMateria->filter(fn ($a) => $a->bajas->isEmpty())->values();
+            $asignacionesConBaja = $asignacionesMateria->filter(fn ($a) => $a->bajas->isNotEmpty());
+
             /** @var CursoEtapaMateria|null $cursoEtapaMateria */
             $cursoEtapaMateria = $cursoEtapaMateriasPorId->get($cursoEtapaMateriaId);
 
@@ -193,7 +200,8 @@ class CursoEtapaHorarioController extends Controller
             }
 
             if (blank($docenteId) && blank($fechaDesde) && blank($hasta)) {
-                foreach ($asignacionesMateria as $asignacionEliminar) {
+                // Solo eliminar activas; las históricas (con baja) se conservan
+                foreach ($asignacionesActivas as $asignacionEliminar) {
                     $asignacionEliminar->delete();
                 }
 
@@ -201,7 +209,7 @@ class CursoEtapaHorarioController extends Controller
             }
 
             /** @var AsignacionDocente|null $asignacion */
-            $asignacion = $asignacionesMateria->shift();
+            $asignacion = $asignacionesActivas->shift();
 
             $payloadAsignacion = [
                 'curso_etapa_materia_id' => $cursoEtapaMateriaId,
@@ -219,7 +227,8 @@ class CursoEtapaHorarioController extends Controller
 
             $asignacionIdsVigentes[] = $asignacion->id;
 
-            foreach ($asignacionesMateria as $duplicada) {
+            // Solo eliminar activas duplicadas extra; nunca las históricas
+            foreach ($asignacionesActivas as $duplicada) {
                 $duplicada->delete();
             }
         }

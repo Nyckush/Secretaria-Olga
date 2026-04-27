@@ -16,11 +16,14 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping, WithColumnWidths, WithEvents
 {
+    protected array $rowsConBaja = [];
+
     public function query()
     {
         return AsignacionDocente::query()
             ->with([
                 'docente',
+                'bajas',
                 'cursoEtapaMateria.cursoEtapa.curso',
                 'cursoEtapaMateria.cursoEtapa.etapa',
                 'cursoEtapaMateria.cursoMateria.materia',
@@ -32,6 +35,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'Nº',
+            'Estado',
             'Apellido y Nombre',
             'DNI',
             'CUIL',
@@ -53,11 +57,12 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'A' => 6,
-            'B' => 35,
-            'C' => 16,
-            'D' => 20,
-            'F' => 30,
-            'N' => 12,
+            'B' => 12,
+            'C' => 35,
+            'D' => 16,
+            'E' => 20,
+            'G' => 30,
+            'O' => 12,
         ];
     }
 
@@ -72,8 +77,8 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
 
                 $sheet->setCellValue('A1', 'COLEGIO SECUNDARIO N°59 "OLGA M. DE AREDEZ" MODALIDAD DE JOVENES Y ADULTOS');
                 $sheet->setCellValue('A2', 'Alvear N° 1145 - 4600 San Salvador de Jujuy - JUJUY');
-                $sheet->mergeCells('A1:O1');
-                $sheet->mergeCells('A2:O2');
+                $sheet->mergeCells('A1:P1');
+                $sheet->mergeCells('A2:P2');
 
                 $sheet->getRowDimension(1)->setRowHeight(44);
                 $sheet->getRowDimension(2)->setRowHeight(34);
@@ -90,7 +95,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     }
                 }
 
-                $sheet->getStyle('A1:O5')->applyFromArray([
+                $sheet->getStyle('A1:P5')->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['argb' => 'FFEDEDED'],
@@ -101,21 +106,21 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     ],
                 ]);
 
-                $sheet->getStyle('A1:O1')->applyFromArray([
+                $sheet->getStyle('A1:P1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 14,
                     ],
                 ]);
 
-                $sheet->getStyle('A2:O2')->applyFromArray([
+                $sheet->getStyle('A2:P2')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 10,
                     ],
                 ]);
 
-                $sheet->getStyle('A6:O6')->applyFromArray([
+                $sheet->getStyle('A6:P6')->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -127,10 +132,10 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     ],
                 ]);
 
-                $sheet->getStyle('G6')->getAlignment()->setWrapText(true);
+                $sheet->getStyle('H6')->getAlignment()->setWrapText(true);
 
                 if ($highestRow > 6) {
-                    $sheet->getStyle("A7:O{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A7:P{$highestRow}")->applyFromArray([
                         'alignment' => [
                             'horizontal' => Alignment::HORIZONTAL_LEFT,
                             'vertical' => Alignment::VERTICAL_CENTER,
@@ -138,7 +143,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     ]);
                 }
 
-                $sheet->getStyle("A6:O{$highestRow}")->applyFromArray([
+                $sheet->getStyle("A6:P{$highestRow}")->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -146,6 +151,15 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                         ],
                     ],
                 ]);
+
+                foreach ($this->rowsConBaja as $excelRow) {
+                    $sheet->getStyle("A{$excelRow}:P{$excelRow}")->applyFromArray([
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['argb' => 'FFFFF59D'],
+                        ],
+                    ]);
+                }
 
                             // --- Ajuste del Escudo (Izquierda) ---
                 $escudoArgentina = new Drawing();
@@ -162,7 +176,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                 $logoEscuela->setName('Logo Escuela');
                 $logoEscuela->setPath(public_path('images/Olga aredez.png'));
                 $logoEscuela->setHeight(75); 
-                $logoEscuela->setCoordinates('N1'); // Si quieres que esté más a la izquierda, cámbialo a 'M1'
+                $logoEscuela->setCoordinates('O1'); // Si quieres que esté más a la izquierda, cámbialo a 'N1'
                 $logoEscuela->setOffsetX(20); // Ajusta para moverlo hacia la izquierda (acercarlo al texto)
                 $logoEscuela->setOffsetY(8);
                 $logoEscuela->setWorksheet($sheet);
@@ -180,6 +194,10 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
         static $rowNumber = 0;
         $rowNumber++;
 
+        if ($row->bajas->isNotEmpty()) {
+            $this->rowsConBaja[] = 6 + $rowNumber;
+        }
+
         $docente = $row->docente;
         $cursoEtapaMateria = $row->cursoEtapaMateria;
         $cursoEtapa = $cursoEtapaMateria?->cursoEtapa;
@@ -190,6 +208,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
 
         return [
             $rowNumber,
+            $row->hasBajaRegistrada() ? 'Baja' : 'Activa',
             trim(($docente?->apellido ?? '') . ' ' . ($docente?->nombre ?? '')),
             $docente?->dni ?? '',
             $docente?->cuil ?? '',

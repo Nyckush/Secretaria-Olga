@@ -82,8 +82,28 @@ entity "docentes" as docentes {
   direccion : varchar(255) [NULL]
   dni : varchar(8) [UNIQUE]
   cuil : varchar(11) [UNIQUE]
+  legajo_junta : varchar(50) [NULL]
+  cobra_asignaciones_familiares : boolean [default false]
+  trabaja_otras_instituciones : boolean [default false]
+  otras_instituciones : text [NULL]
+  tiene_abono_docente : boolean [default false]
+  antiguedad_institucion : tinyint unsigned [NULL]
+  antiguedad_docente : tinyint unsigned [NULL]
   created_at : timestamp
   updated_at : timestamp
+}
+
+entity "titulos" as titulos {
+  PRIMARY_KEY(id) : bigint
+  nombre : varchar(150)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "docente_titulo" as docente_titulo {
+  PRIMARY_KEY(id) : bigint
+  FOREIGN_KEY(docente_id) : bigint
+  FOREIGN_KEY(titulo_id) : bigint
 }
 
 entity "bloques_horarios" as bloques_horarios {
@@ -134,5 +154,9 @@ bloques_horarios ||--o{ horarios : "define bloque"
 modulos ||--o{ materias : "contiene"
 curso_etapa_materia ||--o{ asignaciones_docentes : "tiene"
 docentes ||--o{ asignaciones_docentes : "es asignado en"
+
+docentes }o--o{ titulos : "posee"
+docente_titulo }|--|| docentes : ""
+docente_titulo }|--|| titulos : ""
 
 @enduml
