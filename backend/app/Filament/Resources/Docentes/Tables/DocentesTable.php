@@ -14,25 +14,27 @@ class DocentesTable
     {
         return $table
             ->columns([
-                TextColumn::make('nombre')
-                    ->label('Nombre')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('apellido')
-                    ->label('Apellido')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('telefono')
-                    ->label('Teléfono')
-                    ->sortable(),
+                TextColumn::make('nombre_completo')
+                    ->label('Docente')
+                    ->getStateUsing(fn ($record) => "{$record->apellido}, {$record->nombre}")
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('apellido', $direction)
+                                    ->orderBy('nombre', $direction);
+                    })
+                    ->searchable(['nombre', 'apellido']),
+                        
                 TextColumn::make('dni')
                     ->label('DNI')
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('cuil')
+                    ->label('CUIL')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('telefono')
+                    ->label('TELÉFONO')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Creado')
                     ->dateTime()

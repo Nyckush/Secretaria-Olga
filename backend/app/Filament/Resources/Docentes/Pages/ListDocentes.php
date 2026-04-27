@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Docentes\Pages;
 
+use App\Exports\DocentesExport;
 use App\Filament\Resources\Docentes\DocenteResource;
 use App\Imports\DocentesImport;
 use Filament\Actions\Action;
@@ -10,6 +11,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 
 class ListDocentes extends ListRecords
@@ -20,6 +22,16 @@ class ListDocentes extends ListRecords
     {
         return [
             CreateAction::make(),
+            Action::make('exportarExcel')
+                ->label('Descargar Listado ')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->action(function (): BinaryFileResponse {
+                    return Excel::download(
+                        new DocentesExport(),
+                        'docentes_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                    );
+                }),
             Action::make('importarExcel')
                 ->label('Importar Excel')
                 ->icon('heroicon-o-arrow-up-tray')

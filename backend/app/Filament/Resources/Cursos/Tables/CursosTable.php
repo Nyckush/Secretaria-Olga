@@ -18,13 +18,14 @@ class CursosTable
                     ->label('Anexo')
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('nombre')
-                    ->label('Nombre')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('division')
-                    ->label('División')
-                    ->sortable(),
+                TextColumn::make('curso_completo')
+                    ->label('Curso')
+                    ->getStateUsing(fn ($record) => "{$record->nombre} {$record->division}")
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->orderBy('nombre', $direction)
+                                    ->orderBy('division', $direction);
+                    })
+                    ->searchable(['nombre', 'division']),
                 TextColumn::make('turno')
                     ->label('Turno')
                     ->sortable(),
