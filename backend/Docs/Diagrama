@@ -50,6 +50,7 @@ entity "curso_etapa_materia" as curso_etapa_materia {
   PRIMARY_KEY(id) : bigint
   FOREIGN_KEY(curso_etapa_id) : bigint
   FOREIGN_KEY(curso_materia_id) : bigint
+  horas_catedra : tinyint [default 0]
   created_at : timestamp
   updated_at : timestamp
 }

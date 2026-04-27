@@ -18,6 +18,7 @@ class AnexoSeeder extends Seeder
             'HUMAHUACA',
             'CENTRAL',
             'EL CARMEN',
+            'LIBERTADOR GRAL. SAN MARTIN',
             'PALPALA',
             'LA QUIACA',
         ];

@@ -8,8 +8,10 @@ use App\Filament\Resources\Docentes\Pages\ListDocentes;
 use App\Filament\Resources\Docentes\Schemas\DocenteForm;
 use App\Filament\Resources\Docentes\Tables\DocentesTable;
 use App\Models\Docente;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -23,7 +25,9 @@ class DocenteResource extends Resource
 
     protected static ?string $navigationLabel = 'Docentes';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Academico';
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedUserGroup;
+
+    protected static UnitEnum|string|null $navigationGroup = 'Gestión Académica';
 
     protected static ?string $recordTitleAttribute = 'nombre';
 

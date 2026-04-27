@@ -29,3 +29,10 @@ Moviento Historia de la Materia solo lo que estan dado de baja
   Antiguedad como  Docente   
   Antiguedad en la institucion
   Materia Frente 
+
+
+Cursos
+
+ Crear seeder de Todos los cursos de Todos los anexos ()
+ Ver la Forma de Como asignar el Nª De Cupof ala Materia de un Curso de Forma automática (seeder)
+

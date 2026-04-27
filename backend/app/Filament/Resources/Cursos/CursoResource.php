@@ -10,8 +10,10 @@ use App\Filament\Resources\Cursos\RelationManagers\CursoMateriasRelationManager;
 use App\Filament\Resources\Cursos\Schemas\CursoForm;
 use App\Filament\Resources\Cursos\Tables\CursosTable;
 use App\Models\Curso;
+use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
@@ -25,7 +27,9 @@ class CursoResource extends Resource
 
     protected static ?string $navigationLabel = 'Cursos';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Academico';
+    protected static BackedEnum|string|null $navigationIcon = Heroicon::OutlinedAcademicCap;
+
+    protected static UnitEnum|string|null $navigationGroup = 'Gestión Académica';
 
     protected static ?string $recordTitleAttribute = 'nombre';
 

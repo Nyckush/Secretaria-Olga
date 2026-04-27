@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
             ModuloSeeder::class,
             MateriaSeeder::class,
             EtapaSeeder::class,
+            AnexoCursoSeeder::class,
+            CursoEtapaModuloSeeder::class,
+            CursoMateriaSeeder::class,
             BloqueHorarioSeeder::class,
         ]);
 

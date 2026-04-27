@@ -28,7 +28,7 @@ class ModuloResource extends Resource
 
     protected static ?string $navigationLabel = 'Modulos';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Academico';
+    protected static UnitEnum|string|null $navigationGroup = 'Configuración';
 
     protected static ?string $recordTitleAttribute = 'nombre';
 
