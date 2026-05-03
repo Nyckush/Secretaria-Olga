@@ -22,6 +22,9 @@ class DatabaseSeeder extends Seeder
             CursoEtapaModuloSeeder::class,
             CursoMateriaSeeder::class,
             BloqueHorarioSeeder::class,
+            HorariasPrimerAnioSeeder::class,
+            HorariasSegundoAnioSeeder::class,
+            HorariasTercerAnioSeeder::class,
         ]);
 
         // User::factory(10)->create();

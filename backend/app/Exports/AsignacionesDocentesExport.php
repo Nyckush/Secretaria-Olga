@@ -35,13 +35,12 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'Nº',
-            'Estado',
             'Apellido y Nombre',
             'DNI',
             'CUIL',
             'Sit. Rev.',
             'Materia',
-            "Horas\nCatedra",
+            "Hs \nCatedra",
             'Curso',
             'Div.',
             'Turno',
@@ -57,12 +56,14 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
     {
         return [
             'A' => 6,
-            'B' => 12,
-            'C' => 35,
-            'D' => 16,
-            'E' => 20,
-            'G' => 30,
+            'B' => 35,
+            'C' => 12,
+            'D' => 14,
+            'E' => 10,
+            'F' => 35,
             'O' => 12,
+            'N' => 20,
+            'O' => 20,
         ];
     }
 
@@ -77,8 +78,8 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
 
                 $sheet->setCellValue('A1', 'COLEGIO SECUNDARIO N°59 "OLGA M. DE AREDEZ" MODALIDAD DE JOVENES Y ADULTOS');
                 $sheet->setCellValue('A2', 'Alvear N° 1145 - 4600 San Salvador de Jujuy - JUJUY');
-                $sheet->mergeCells('A1:P1');
-                $sheet->mergeCells('A2:P2');
+                $sheet->mergeCells('A1:O1');
+                $sheet->mergeCells('A2:O2');
 
                 $sheet->getRowDimension(1)->setRowHeight(44);
                 $sheet->getRowDimension(2)->setRowHeight(34);
@@ -95,7 +96,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     }
                 }
 
-                $sheet->getStyle('A1:P5')->applyFromArray([
+                $sheet->getStyle('A1:O5')->applyFromArray([
                     'fill' => [
                         'fillType' => Fill::FILL_SOLID,
                         'startColor' => ['argb' => 'FFEDEDED'],
@@ -106,21 +107,21 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     ],
                 ]);
 
-                $sheet->getStyle('A1:P1')->applyFromArray([
+                $sheet->getStyle('A1:O1')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 14,
                     ],
                 ]);
 
-                $sheet->getStyle('A2:P2')->applyFromArray([
+                $sheet->getStyle('A2:O2')->applyFromArray([
                     'font' => [
                         'bold' => true,
                         'size' => 10,
                     ],
                 ]);
 
-                $sheet->getStyle('A6:P6')->applyFromArray([
+                $sheet->getStyle('A6:O6')->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -135,7 +136,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                 $sheet->getStyle('H6')->getAlignment()->setWrapText(true);
 
                 if ($highestRow > 6) {
-                    $sheet->getStyle("A7:P{$highestRow}")->applyFromArray([
+                    $sheet->getStyle("A7:O{$highestRow}")->applyFromArray([
                         'alignment' => [
                             'horizontal' => Alignment::HORIZONTAL_LEFT,
                             'vertical' => Alignment::VERTICAL_CENTER,
@@ -143,7 +144,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                     ]);
                 }
 
-                $sheet->getStyle("A6:P{$highestRow}")->applyFromArray([
+                $sheet->getStyle("A6:O{$highestRow}")->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -153,7 +154,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                 ]);
 
                 foreach ($this->rowsConBaja as $excelRow) {
-                    $sheet->getStyle("A{$excelRow}:P{$excelRow}")->applyFromArray([
+                    $sheet->getStyle("A{$excelRow}:O{$excelRow}")->applyFromArray([
                         'fill' => [
                             'fillType' => Fill::FILL_SOLID,
                             'startColor' => ['argb' => 'FFFFF59D'],
@@ -208,7 +209,6 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
 
         return [
             $rowNumber,
-            $row->hasBajaRegistrada() ? 'Baja' : 'Activa',
             trim(($docente?->apellido ?? '') . ' ' . ($docente?->nombre ?? '')),
             $docente?->dni ?? '',
             $docente?->cuil ?? '',

@@ -460,23 +460,6 @@ class CursoMateriaSeeder extends Seeder
 
     private function resolverPeriodo(array $ordenes): string
     {
-        $ordenes = array_map('intval', $ordenes);
-
-        $tieneC1 = in_array(1, $ordenes, true);
-        $tieneC2 = in_array(2, $ordenes, true);
-
-        if ($tieneC1 && $tieneC2) {
-            return 'A';
-        }
-
-        if ($tieneC1) {
-            return 'C1';
-        }
-
-        if ($tieneC2) {
-            return 'C2';
-        }
-
         return 'A';
     }
 }

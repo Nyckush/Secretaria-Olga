@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AsignacionesDocentes\Pages;
 
 use App\Exports\AsignacionesDocentesExport;
+use App\Exports\BajasRegistradasExport;
 use App\Filament\Resources\AsignacionesDocentes\AsignacionDocenteResource;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -17,7 +18,7 @@ class ListAsignacionesDocentes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+          
             Action::make('exportarExcel')
                 ->label('Exportar Excel')
                 ->icon('heroicon-o-arrow-down-tray')
@@ -26,6 +27,16 @@ class ListAsignacionesDocentes extends ListRecords
                     return Excel::download(
                         new AsignacionesDocentesExport(),
                         'asignaciones_docentes_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
+                    );
+                }),
+            Action::make('descargarBajas')
+                ->label('Descargar Planilla de Baja')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('warning')
+                ->action(function (): BinaryFileResponse {
+                    return Excel::download(
+                        new BajasRegistradasExport(),
+                        'bajas_registradas_' . now()->format('Y-m-d_H-i-s') . '.xlsx'
                     );
                 }),
         ];

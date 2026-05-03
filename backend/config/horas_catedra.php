@@ -1,0 +1,17 @@
+<?php
+
+return [
+    'LENGUA Y LITERATURA' => 4,
+    'MATEMATICA' => 4,
+    'GEOGRAFIA' => 2,
+    'HISTORIA' => 3,
+    'CIENCIAS BIOLOGICAS' => 3,
+    'FILOSOFIA' => 3,
+    'LENGUA EXTRANJERA' => 4,
+    'PSICOLOGIA' => 2,
+    'SOCIOLOGIA' => 3,
+    'ARTES VISUALES' => 2,
+    'CONSTRUCCION PARA LA CIUDADANIA' => 3,
+    'EDUCACION DIGITAL' => 3,
+    'TALLER PRODUCCION GRAFICA Y DIGITAL' => 4,
+];

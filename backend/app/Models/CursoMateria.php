@@ -17,6 +17,13 @@ class CursoMateria extends Model
         'nro_cupof',
     ];
 
+    /**
+     * Valores por defecto para nuevos modelos.
+     */
+    protected $attributes = [
+        'periodo' => 'A',
+    ];
+
     public function curso(): BelongsTo
     {
         return $this->belongsTo(Curso::class);
