@@ -13,4 +13,6 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::post('/admin/curso-etapas/{cursoEtapa}/horarios', [CursoEtapaHorarioController::class, 'store'])
         ->name('curso-etapas.horarios.store');
+    Route::post('/admin/curso-etapas/{cursoEtapa}/asignaciones/ajax', [CursoEtapaHorarioController::class, 'ajaxCreateAsignacion'])
+        ->name('curso-etapas.asignaciones.ajax');
 });
