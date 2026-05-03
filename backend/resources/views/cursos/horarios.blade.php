@@ -16,23 +16,5 @@
             <button class="tab-btn" data-tab="grilla" role="tab" aria-controls="tab-grilla">Grilla Semanal</button>
             <button class="tab-btn" data-tab="asignacion" role="tab" aria-controls="tab-asignacion">Asignación de Docentes</button>
         </div>
-
+@include('cursos.index')
         <form method="POST" action="{{ route('curso-etapas.horarios.store', ['cursoEtapa' => $cursoEtapa]) }}">
-            @csrf
-
-            <div id="tab-grilla">
-                @include('cursos.partials.grilla')
-            </div>
-
-            <div id="tab-asignacion" class="hidden">
-                @include('cursos.partials.asignacion')
-            </div>
-
-            @include('cursos.partials.form-actions')
-
-        </form>
-    </div>
-
-    <script src="{{ asset('js/horarios.js') }}" defer></script>
-</body>
-</html>
