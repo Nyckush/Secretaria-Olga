@@ -1,13 +1,13 @@
 <div class="section">
     <h2>1) Asignaciones</h2>
     <p>Definí docente y período por cada materia del curso en esta etapa.</p>
-    <div style="overflow:auto;">
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
-                    <th>Materia</th>
-                    <th>Docente</th>
-                    <th>Situación revista</th>
+                    <th class="col-materia">Materia</th>
+                    <th class="col-docente">Docente</th>
+                    <th class="col-sit">Sit. Rev.</th>
                     <th>Horas Cátedra</th>
                     <th>Fecha desde</th>
                     <th>Hasta</th>
@@ -26,19 +26,19 @@
                         $hastaValue = old("asignaciones.$materiaId.hasta", data_get($asignacionActual, 'hasta'));
                     @endphp
                     <tr>
-                        <td>
+                        <td class="col-materia">
                             {{ $cursoEtapaMateria->cursoMateria?->materia?->nombre ?? ('Materia #' . $materiaId) }}
                         </td>
-                        <td>
-                            <div style="position:relative;">
+                        <td class="col-docente">
+                            <div class="relative">
                                 <input type="text" class="docente-search-row" placeholder="Buscar docente" autocomplete="off" value="{{ $docentes->firstWhere('id', $docenteValue)?->apellido ? $docentes->firstWhere('id', $docenteValue)->apellido . ', ' . $docentes->firstWhere('id', $docenteValue)->nombre : '' }}">
                                 <input type="hidden" name="asignaciones[{{ $materiaId }}][docente_id]" id="docente-id-row-{{ $materiaId }}" value="{{ $docenteValue }}">
-                                <div class="docente-suggestions-row" style="position:absolute; left:0; right:0; background:#fff; border:1px solid #ddd; max-height:200px; overflow:auto; z-index:30; display:none;"></div>
+                                <div class="docente-suggestions-row"></div>
                             </div>
                         </td>
-                        <td>
+                        <td class="col-sit">
                             <select name="asignaciones[{{ $materiaId }}][situacion_revista]">
-                                <option value="">- Seleccionar situación -</option>
+                                <option value="">- Seleccionar sit/option>
                                 <option value="INT" @selected((string) $situacionRevistaValue === 'INT')>INT - Titular</option>
                                 <option value="SUP" @selected((string) $situacionRevistaValue === 'SUP')>SUP - Suplente</option>
                                 <option value="PRO" @selected((string) $situacionRevistaValue === 'PRO')>PRO - Provisional</option>
@@ -46,8 +46,7 @@
                         </td>
                         <td>
                             <input
-                                type="number"
-                                min="0"
+                                type="number"                                min="0"
                                 max="255"
                                 step="1"
                                 name="asignaciones[{{ $materiaId }}][horas_catedra]"
@@ -80,7 +79,7 @@
         </table>
     </div>
 </div>
-<div class="actions" style="margin-top:12px;">
+<div class="actions">
     <button type="submit" class="btn btn-save">Guardar asignaciones</button>
     <span class="hint">Guardá sólo las asignaciones modificadas.</span>
 </div>

@@ -1,157 +1,11 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<x-filament-panels::layout.index>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Horarios - {{ $cursoEtapa->curso->nombre }} - {{ $cursoEtapa->etapa->nombre }}</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+  
+ 
+        @include('filament.cursos.horariosStilos')
 
-        body {
-            margin: 0;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            background: #f7f7f7;
-            color: #1f2937;
-        }
 
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 20px 16px 28px;
-        }
 
-        .top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.35rem;
-        }
-
-        .muted {
-            color: #6b7280;
-            font-size: 0.92rem;
-        }
-
-        .section {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 14px;
-            margin-bottom: 14px;
-        }
-
-        .section h2 {
-            margin: 0 0 10px;
-            font-size: 1.05rem;
-        }
-
-        .section p {
-            margin: 0 0 10px;
-            color: #6b7280;
-            font-size: 0.9rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #e5e7eb;
-            vertical-align: top;
-            text-align: left;
-            padding: 8px;
-        }
-
-        thead th {
-            background: #f3f4f6;
-        }
-
-        input,
-        select {
-            width: 100%;
-            min-height: 34px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            padding: 5px 8px;
-            background: #fff;
-        }
-
-        .bloque {
-            min-width: 170px;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .btn-save {
-            background: #1d4ed8;
-            color: #fff;
-        }
-
-        .btn-back {
-            background: #fff;
-            color: #1f2937;
-            border-color: #d1d5db;
-        }
-
-        .flash {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .flash-ok {
-            background: #ecfdf5;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .flash-danger {
-            background: #fef2f2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-
-        .hint {
-            color: #6b7280;
-            font-size: 0.82rem;
-        }
-
-        @media (max-width: 900px) {
-            .section {
-                padding: 12px;
-            }
-        }
-    </style>
-</head>
-<body>
     <div class="container">
         <div class="top">
             <div>
@@ -190,13 +44,13 @@
         <form id="form-grilla" method="POST" action="{{ route('curso-etapas.horarios.store', ['cursoEtapa' => $cursoEtapa]) }}">
             @csrf
             <input type="hidden" name="save_section" value="grilla">
-            @include('cursos.grilla-semanal')
+            @include('filament.cursos.grilla-semanal')
         </form>
 
         <form id="form-asign" method="POST" action="{{ route('curso-etapas.horarios.store', ['cursoEtapa' => $cursoEtapa]) }}" style="display:none;">
             @csrf
             <input type="hidden" name="save_section" value="asignaciones">
-            @include('cursos.asignacion-docentes')
+            @include('filament.cursos.asignacion-docentes')
         </form>
 
         <script>
@@ -227,7 +81,6 @@
                 grillaBtn.addEventListener('click', showGrilla);
                 asignBtn.addEventListener('click', showAsign);
 
-                // Default: mostrar grilla, o la sección enviada previamente
                 const initial = '{{ old("save_section", "grilla") }}';
                 if (initial === 'asignaciones') {
                     showAsign();
@@ -238,13 +91,13 @@
         </script>
 
         <!-- Modal para crear asignación rápida -->
-        <div id="modal-asignar" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
-            <div style="background:#fff; width:520px; max-width:96%; border-radius:8px; padding:16px;">
+        <div id="modal-asignar" class="formModal">
+            <div class="modalForm">
                 <h3 style="margin-top:0;">Crear asignación rápida</h3>
-                <form id="form-ajax-asign" style="display:flex; flex-direction:column; gap:8px;">
+                <form id="form-ajax-asign" >
                     <label>
                         Materia
-                        <select name="curso_etapa_materia_id" required>
+                        <select name="curso_etapa_materia_id" id="materia-select" required>
                             @foreach($cursoEtapaMaterias as $cem)
                                 <option value="{{ $cem->id }}">{{ $cem->cursoMateria?->materia?->nombre ?? ('Materia #' . $cem->id) }}</option>
                             @endforeach
@@ -254,11 +107,11 @@
                         Docente
                         <input type="text" id="docente-search" placeholder="Buscar docente por apellido o nombre" autocomplete="off" required>
                         <input type="hidden" name="docente_id" id="docente-id">
-                        <div id="docente-suggestions" style="position:absolute; left:0; right:0; background:#fff; border:1px solid #ddd; max-height:200px; overflow:auto; z-index:40; display:none;"></div>
+                        <div id="docente-suggestions" class="docente-suggestionsModal"></div>
                     </label>
                     <label>
                         Situación revista
-                        <select name="situacion_revista" required>
+                        <select name="situacion_revista" id="situacion-revista" required>
                             <option value="INT">INT - Titular</option>
                             <option value="SUP">SUP - Suplente</option>
                             <option value="PRO">PRO - Provisional</option>
@@ -266,11 +119,11 @@
                     </label>
                     <label>
                         Fecha desde
-                        <input type="date" name="fecha_desde" required>
+                        <input type="date" name="fecha_desde" id="fecha-desde" required>
                     </label>
                     <label>
                         Hasta
-                        <input type="text" name="hasta" maxlength="50" placeholder="Ejemplo: fin del ciclo">
+                        <input type="text" name="hasta" id="hasta" maxlength="50" placeholder="Ejemplo: fin del ciclo">
                     </label>
                     <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
                         <button type="button" id="modal-cancel" class="btn btn-back">Cancelar</button>
@@ -287,33 +140,85 @@
                 const formAjax = document.getElementById('form-ajax-asign');
                 const cancelBtn = document.getElementById('modal-cancel');
                 let targetSelect = null;
+                let targetInput = null;
+                let targetCell = null;
+                let targetDia = null;
+                let targetBloque = null;
 
-                function openModalFor(selectEl) {
-                    targetSelect = selectEl;
+                function openModalFor(inputEl) {
+                    targetSelect = null; // No hay select en slots vacíos
+                    targetInput = inputEl;
                     modal.style.display = 'flex';
                 }
 
                 function closeModal() {
                     modal.style.display = 'none';
                     targetSelect = null;
+                    targetInput = null;
+                    targetCell = null;
+                    targetDia = null;
+                    targetBloque = null;
                     formAjax.reset();
                 }
 
                 cancelBtn.addEventListener('click', closeModal);
 
-                // Delegación: abrir modal cuando se hace click en botón .btn-assign
                 document.addEventListener('click', function(e){
                     const btn = e.target.closest('.btn-assign');
                     if (!btn) return;
-                    // Encontrar select en misma celda
                     const cell = btn.closest('td');
-                    const select = cell ? cell.querySelector('select.slot-select') : null;
-                    if (!select) return;
-                    openModalFor(select);
+                    const input = cell ? cell.querySelector('input.slot-value') : null;
+                    if (!input) return;
+                    targetCell = cell;
+                    targetDia = btn.dataset.dia;
+                    targetBloque = btn.dataset.bloque;
+                    openModalFor(input);
                 });
 
-                // Inicializar datos de docentes para autocompletar
+                document.addEventListener('change', function(e){
+                    const select = e.target.closest('select.slot-select');
+                    if (!select) return;
+                    const cell = select.closest('td');
+                    const input = cell ? cell.querySelector('input.slot-value') : null;
+                    if (!input) return;
+                    input.value = select.value || '';
+                });
+
+
+
                 const DOCENTES = @json($docentes->map(fn($d) => ['id' => $d->id, 'label' => trim(($d->apellido ?? '') . ', ' . ($d->nombre ?? ''). ' ( dni: ' . ($d->dni ?? 'sin doc') . ')')]));
+                const ASIGNACIONES_POR_MATERIA = @json($asignacionesPorMateria);
+
+                // Autocomplete al cambiar materia
+                document.getElementById('materia-select').addEventListener('change', function() {
+                    const cemId = this.value;
+                    const asignacion = ASIGNACIONES_POR_MATERIA[cemId];
+                    if (asignacion) {
+                        // Llenar docente
+                        const docente = DOCENTES.find(d => d.id == asignacion.docente_id);
+                        if (docente) {
+                            document.getElementById('docente-search').value = docente.label;
+                            document.getElementById('docente-id').value = docente.id;
+                            console.log('Asignación encontrada para materia', cemId, '-> Docente:', docente.label);
+                        }
+                        // Situación revista
+                        document.getElementById('situacion-revista').value = asignacion.situacion_revista;
+                        // Fecha desde
+                        document.getElementById('fecha-desde').value = asignacion.fecha_desde;
+                        // Hasta
+                        document.getElementById('hasta').value = asignacion.hasta || '';
+
+
+
+                    } else {
+                        // Limpiar si no hay asignación
+                        document.getElementById('docente-search').value = '';
+                        document.getElementById('docente-id').value = '';
+                        document.getElementById('situacion-revista').value = '';
+                        document.getElementById('fecha-desde').value = '';
+                        document.getElementById('hasta').value = '';
+                    }
+                });
 
                 (function initDocenteSearch(){
                     function renderSuggestionsFor(inputEl, suggestionsEl, items){
@@ -326,7 +231,6 @@
                             div.style.cursor = 'pointer';
                             div.addEventListener('click', function(){
                                 inputEl.value = it.label;
-                                // find hidden input in same container
                                 const hidden = inputEl.parentElement.querySelector('input[type="hidden"]');
                                 if (hidden) hidden.value = it.id;
                                 suggestionsEl.style.display = 'none';
@@ -340,7 +244,6 @@
                         const el = e.target;
                         if (!el.matches('.docente-search-row') && el.id !== 'docente-search') return;
                         const q = el.value.trim().toLowerCase();
-                        // determine suggestions container
                         let suggestionsEl;
                         if (el.id === 'docente-search') {
                             suggestionsEl = document.getElementById('docente-suggestions');
@@ -353,14 +256,11 @@
                         renderSuggestionsFor(el, suggestionsEl, results);
                     });
 
-                    // cerrar sugerencias al click fuera
                     document.addEventListener('click', function(e){
                         if (!e.target.closest('#docente-search') && !e.target.closest('#docente-suggestions')) {
-                            // hide modal suggestions
                             const modalSug = document.getElementById('docente-suggestions');
                             if (modalSug) modalSug.style.display = 'none';
                         }
-                        // hide row suggestions
                         if (!e.target.closest('.docente-search-row') && !e.target.closest('.docente-suggestions-row')) {
                             document.querySelectorAll('.docente-suggestions-row').forEach(s => s.style.display = 'none');
                         }
@@ -369,7 +269,7 @@
 
                 formAjax.addEventListener('submit', async function(e){
                     e.preventDefault();
-                    if (!targetSelect) return;
+                    if (!targetInput) return;
 
                     const docenteIdVal = document.getElementById('docente-id').value;
                     if (!docenteIdVal) {
@@ -399,12 +299,24 @@
 
                         const data = await res.json();
 
-                        // Añadir opción a select objetivo y seleccionarla
                         const opt = document.createElement('option');
                         opt.value = data.id;
                         opt.textContent = data.etiqueta;
-                        targetSelect.appendChild(opt);
-                        targetSelect.value = data.id;
+                        if (targetSelect) {
+                            targetSelect.appendChild(opt);
+                            targetSelect.value = String(data.id);
+                        }
+
+                        targetInput.value = String(data.id);
+
+                        // Actualizar visualmente la celda
+                        if (targetCell) {
+                            const partes = data.etiqueta.split(' - ');
+                            const materia = partes[0] || '';
+                            const docente = partes[1] || '';
+                            const newContent = `<div><strong>${materia}</strong><br><span class="hint">${docente}</span></div>`;
+                            targetCell.innerHTML = `<div style="display:flex; gap:6px; align-items:start; flex-direction:column;"><input type="hidden" name="slots[${targetDia}][${targetBloque}]" class="slot-value" value="${data.id}">${newContent}</div>`;
+                        }
 
                         closeModal();
                     } catch (err) {
@@ -415,5 +327,4 @@
             })();
         </script>
     </div>
-</body>
-</html>
+</x-filament-panels::layout.index>

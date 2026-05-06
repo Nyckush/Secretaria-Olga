@@ -1,5 +1,5 @@
-<div class="section">
-    <h2>2) Grilla de Horarios</h2>
+<div class="grillaContainer">
+    <h2>2 Grilla de Horarios</h2>
     <p>Seleccioná una asignación (Materia - Docente) en cada bloque y día.</p>
     <div style="overflow:auto;">
         <table>
@@ -21,18 +21,25 @@
                         @foreach($diasSemana as $dia)
                             @php
                                 $slotValue = old("slots.$dia.{$bloque->id}", data_get($slots, "$dia.{$bloque->id}"));
+                                $slotTieneAsignacion = filled($slotValue);
                             @endphp
                             <td>
-                                <div style="display:flex; gap:6px; align-items:start;">
-                                    <select name="slots[{{ $dia }}][{{ $bloque->id }}]" class="slot-select" data-dia="{{ $dia }}" data-bloque="{{ $bloque->id }}">
-                                        <option value="">- Sin asignar -</option>
-                                        @foreach($asignacionesOpciones as $asignacionId => $etiqueta)
-                                            <option value="{{ $asignacionId }}" @selected((string) $slotValue === (string) $asignacionId)>
-                                                {{ $etiqueta }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    <button type="button" class="btn btn-back btn-assign" data-dia="{{ $dia }}" data-bloque="{{ $bloque->id }}">Asignar</button>
+                                <div style="display:flex; gap:6px; align-items:start; flex-direction:column;">
+                                    <input type="hidden" name="slots[{{ $dia }}][{{ $bloque->id }}]" class="slot-value" value="{{ $slotValue }}">
+                                    @if($slotTieneAsignacion)
+                                        @php
+                                            $etiqueta = $asignacionesOpciones[$slotValue] ?? '';
+                                            $partes = explode(' - ', $etiqueta, 2);
+                                            $materia = $partes[0] ?? '';
+                                            $docente = $partes[1] ?? '';
+                                        @endphp
+                                        <div>
+                                            <strong>{{ $materia }}</strong><br>
+                                            <span class="hint">{{ $docente }}</span>
+                                        </div>
+                                    @else
+                                        <button type="button" class="btn btn-ghost btn-assign" data-dia="{{ $dia }}" data-bloque="{{ $bloque->id }}">+</button>
+                                    @endif
                                 </div>
                             </td>
                         @endforeach

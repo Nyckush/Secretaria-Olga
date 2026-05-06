@@ -57,10 +57,20 @@ class CursoEtapaHorarioController extends Controller
             ->orderByDesc('id')
             ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'situacion_revista', 'fecha_desde', 'hasta']);
 
-        $asignacionesPorMateria = $asignaciones
-            ->groupBy('curso_etapa_materia_id')
-            ->map(fn ($items) => $items->first())
-            ->toArray();
+    $asignacionesPorMateria = $asignaciones
+    ->groupBy('curso_etapa_materia_id')
+    ->map(function ($items) {
+        $a = $items->first();
+
+        return [
+            'id' => $a->id,
+            'docente_id' => $a->docente_id,
+            'situacion_revista' => $a->situacion_revista,
+            'fecha_desde' => optional($a->fecha_desde)->format('Y-m-d'),
+            'hasta' => $a->hasta,
+        ];
+    })
+    ->toArray();
 
         $asignacionesOpciones = $asignaciones
             ->mapWithKeys(function (AsignacionDocente $asignacion): array {
@@ -83,7 +93,7 @@ class CursoEtapaHorarioController extends Controller
             }
         }
 
-        return view('cursos.horarios', [
+        return view('filament.cursos.horarios', [
             'cursoEtapa' => $cursoEtapa,
             'diasSemana' => self::DIAS_SEMANA,
             'bloques' => $bloques,
