@@ -57,20 +57,38 @@ class CursoEtapaHorarioController extends Controller
             ->orderByDesc('id')
             ->get(['id', 'curso_etapa_materia_id', 'docente_id', 'situacion_revista', 'fecha_desde', 'hasta']);
 
-    $asignacionesPorMateria = $asignaciones
-    ->groupBy('curso_etapa_materia_id')
-    ->map(function ($items) {
-        $a = $items->first();
+        $asignacionesPorMateria = $asignaciones
+            ->groupBy('curso_etapa_materia_id')
+            ->map(function ($items) {
+                $a = $items->first();
 
-        return [
-            'id' => $a->id,
-            'docente_id' => $a->docente_id,
-            'situacion_revista' => $a->situacion_revista,
-            'fecha_desde' => optional($a->fecha_desde)->format('Y-m-d'),
-            'hasta' => $a->hasta,
-        ];
-    })
-    ->toArray();
+                return [
+                    'id' => $a->id,
+                    'curso_etapa_materia_id' => $a->curso_etapa_materia_id,
+                    'docente_id' => $a->docente_id,
+                    'situacion_revista' => $a->situacion_revista,
+                    'fecha_desde' => optional($a->fecha_desde)->format('Y-m-d'),
+                    'horas_catedra' => $a->cursoEtapaMateria?->horas_catedra,
+                    'hasta' => $a->hasta,
+                ];
+            })
+            ->toArray();
+
+        $asignacionesPorId = $asignaciones
+            ->mapWithKeys(function (AsignacionDocente $asignacion): array {
+                return [
+                    $asignacion->id => [
+                        'id' => $asignacion->id,
+                        'curso_etapa_materia_id' => $asignacion->curso_etapa_materia_id,
+                        'docente_id' => $asignacion->docente_id,
+                        'situacion_revista' => $asignacion->situacion_revista,
+                        'fecha_desde' => optional($asignacion->fecha_desde)->format('Y-m-d'),
+                        'horas_catedra' => $asignacion->cursoEtapaMateria?->horas_catedra,
+                        'hasta' => $asignacion->hasta,
+                    ],
+                ];
+            })
+            ->toArray();
 
         $asignacionesOpciones = $asignaciones
             ->mapWithKeys(function (AsignacionDocente $asignacion): array {
@@ -100,6 +118,7 @@ class CursoEtapaHorarioController extends Controller
             'docentes' => $docentes,
             'cursoEtapaMaterias' => $cursoEtapaMaterias,
             'asignacionesPorMateria' => $asignacionesPorMateria,
+            'asignacionesPorId' => $asignacionesPorId,
             'asignacionesOpciones' => $asignacionesOpciones,
             'slots' => $slots,
         ]);
@@ -108,55 +127,19 @@ class CursoEtapaHorarioController extends Controller
     public function store(Request $request, CursoEtapa $cursoEtapa): RedirectResponse
     {
         $bloqueIds = BloqueHorario::query()->orderBy('orden')->pluck('id');
-        $docenteIds = Docente::query()->pluck('id');
         $cursoEtapaMaterias = $this->obtenerOCrearCursoEtapaMaterias($cursoEtapa);
         $cursoEtapaMateriaIds = $cursoEtapaMaterias->pluck('id');
-        $cursoEtapaMateriasPorId = $cursoEtapaMaterias->keyBy('id');
 
         $validator = Validator::make(
             $request->all(),
             [
-                'asignaciones' => ['nullable', 'array'],
-                'asignaciones.*' => ['array'],
-                'asignaciones.*.docente_id' => ['nullable', 'integer'],
-                'asignaciones.*.situacion_revista' => ['nullable', 'in:INT,SUP,PRO'],
-                'asignaciones.*.horas_catedra' => ['nullable', 'integer', 'min:0', 'max:255'],
-                'asignaciones.*.fecha_desde' => ['nullable', 'date'],
-                'asignaciones.*.hasta' => ['nullable', 'string', 'max:50'],
                 'slots' => ['nullable', 'array'],
                 'slots.*' => ['array'],
                 'slots.*.*' => ['nullable', 'integer'],
             ]
         );
 
-        $validator->after(function ($validator) use ($request, $bloqueIds, $docenteIds, $cursoEtapaMateriaIds): void {
-            foreach ((array) $request->input('asignaciones', []) as $cursoEtapaMateriaId => $asignacion) {
-                if (! $cursoEtapaMateriaIds->contains((int) $cursoEtapaMateriaId)) {
-                    $validator->errors()->add("asignaciones.$cursoEtapaMateriaId", 'La materia no pertenece a esta etapa del curso.');
-                    continue;
-                }
-
-                $docenteId = data_get($asignacion, 'docente_id');
-                $situacionRevista = data_get($asignacion, 'situacion_revista');
-                $fechaDesde = data_get($asignacion, 'fecha_desde');
-                $hasta = data_get($asignacion, 'hasta');
-
-                $hayDatosAsignacion = filled($docenteId) || filled($situacionRevista) || filled($fechaDesde) || filled($hasta);
-
-                if (! $hayDatosAsignacion) {
-                    continue;
-                }
-
-                if (blank($docenteId) || blank($situacionRevista) || blank($fechaDesde) || blank($hasta)) {
-                    $validator->errors()->add("asignaciones.$cursoEtapaMateriaId", 'Completa docente, situación de revista, fecha desde y hasta para la asignación.');
-                    continue;
-                }
-
-                if (! $docenteIds->contains((int) $docenteId)) {
-                    $validator->errors()->add("asignaciones.$cursoEtapaMateriaId.docente_id", 'El docente seleccionado no es válido.');
-                }
-            }
-
+        $validator->after(function ($validator) use ($request, $bloqueIds, $cursoEtapaMateriaIds): void {
             $asignacionIdsValidas = AsignacionDocente::query()
                 ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
                 ->activas()
@@ -179,80 +162,11 @@ class CursoEtapaHorarioController extends Controller
 
         $data = $validator->validate();
 
-        $saveSection = $request->input('save_section');
-
-        $asignacionesExistentes = AsignacionDocente::query()
-            ->with(['bajas'])
+        $asignacionIdsVigentes = AsignacionDocente::query()
             ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
-            ->get()
-            ->groupBy('curso_etapa_materia_id');
-
-        $asignacionIdsVigentes = [];
-
-        if ($saveSection !== 'grilla') {
-            foreach ($cursoEtapaMateriaIds as $cursoEtapaMateriaId) {
-                $inputAsignacion = data_get($data, "asignaciones.$cursoEtapaMateriaId", []);
-                $horasCatedra = blank($inputAsignacion['horas_catedra'] ?? null) ? 0 : (int) $inputAsignacion['horas_catedra'];
-                $docenteId = blank($inputAsignacion['docente_id'] ?? null) ? null : (int) $inputAsignacion['docente_id'];
-                $situacionRevista = blank($inputAsignacion['situacion_revista'] ?? null) ? 'INT' : (string) $inputAsignacion['situacion_revista'];
-                $fechaDesde = $inputAsignacion['fecha_desde'] ?? null;
-                $hasta = $inputAsignacion['hasta'] ?? null;
-                $asignacionesMateria = $asignacionesExistentes->get($cursoEtapaMateriaId, collect())->sortByDesc('id')->values();
-
-                // Separar activas (sin baja) de históricas (con baja) — las históricas nunca se tocan
-                $asignacionesActivas = $asignacionesMateria->filter(fn ($a) => $a->bajas->isEmpty())->values();
-                $asignacionesConBaja = $asignacionesMateria->filter(fn ($a) => $a->bajas->isNotEmpty());
-
-                /** @var CursoEtapaMateria|null $cursoEtapaMateria */
-                $cursoEtapaMateria = $cursoEtapaMateriasPorId->get($cursoEtapaMateriaId);
-
-                if ($cursoEtapaMateria && $cursoEtapaMateria->horas_catedra !== $horasCatedra) {
-                    $cursoEtapaMateria->update([
-                        'horas_catedra' => $horasCatedra,
-                    ]);
-                }
-
-                if (blank($docenteId) && blank($fechaDesde) && blank($hasta)) {
-                    // Solo eliminar activas; las históricas (con baja) se conservan
-                    foreach ($asignacionesActivas as $asignacionEliminar) {
-                        $asignacionEliminar->delete();
-                    }
-
-                    continue;
-                }
-
-                /** @var AsignacionDocente|null $asignacion */
-                $asignacion = $asignacionesActivas->shift();
-
-                $payloadAsignacion = [
-                    'curso_etapa_materia_id' => $cursoEtapaMateriaId,
-                    'docente_id' => $docenteId,
-                    'situacion_revista' => $situacionRevista,
-                    'fecha_desde' => $fechaDesde,
-                    'hasta' => $hasta,
-                ];
-
-                if ($asignacion) {
-                    $asignacion->update($payloadAsignacion);
-                } else {
-                    $asignacion = AsignacionDocente::create($payloadAsignacion);
-                }
-
-                $asignacionIdsVigentes[] = $asignacion->id;
-
-                // Solo eliminar activas duplicadas extra; nunca las históricas
-                foreach ($asignacionesActivas as $duplicada) {
-                    $duplicada->delete();
-                }
-            }
-        } else {
-            // Guardando sólo la grilla: no tocar asignaciones, usar las vigentes actuales
-            $asignacionIdsVigentes = AsignacionDocente::query()
-                ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
-                ->activas()
-                ->pluck('id')
-                ->toArray();
-        }
+            ->activas()
+            ->pluck('id')
+            ->toArray();
 
         $asignacionesVigentes = AsignacionDocente::query()
             ->whereIn('id', $asignacionIdsVigentes)
@@ -266,56 +180,54 @@ class CursoEtapaHorarioController extends Controller
             ->get()
             ->groupBy(fn (Horario $horario): string => $horario->dia_semana . '-' . $horario->bloque_id);
 
-        if ($saveSection !== 'asignaciones') {
-            foreach (self::DIAS_SEMANA as $dia) {
-                foreach ($bloqueIds as $bloqueId) {
-                    $asignacionDocenteId = blank(data_get($data, "slots.$dia.$bloqueId")) ? null : (int) data_get($data, "slots.$dia.$bloqueId");
-                    $clave = $dia . '-' . $bloqueId;
-                    $horariosSlot = $horariosExistentes->get($clave, collect());
+        foreach (self::DIAS_SEMANA as $dia) {
+            foreach ($bloqueIds as $bloqueId) {
+                $asignacionDocenteId = blank(data_get($data, "slots.$dia.$bloqueId")) ? null : (int) data_get($data, "slots.$dia.$bloqueId");
+                $clave = $dia . '-' . $bloqueId;
+                $horariosSlot = $horariosExistentes->get($clave, collect());
 
-                    if (blank($asignacionDocenteId) || ! in_array($asignacionDocenteId, $asignacionIdsVigentes, true)) {
-                        foreach ($horariosSlot as $horarioExistente) {
-                            $horarioExistente->delete();
-                        }
-
-                        continue;
+                if (blank($asignacionDocenteId) || ! in_array($asignacionDocenteId, $asignacionIdsVigentes, true)) {
+                    foreach ($horariosSlot as $horarioExistente) {
+                        $horarioExistente->delete();
                     }
 
-                    /** @var Horario|null $horario */
-                    $horario = $horariosSlot->shift();
-                    $asignacion = $asignacionesVigentes->get($asignacionDocenteId);
+                    continue;
+                }
 
-                    if (! $asignacion) {
-                        foreach ($horariosSlot as $horarioExistente) {
-                            $horarioExistente->delete();
-                        }
+                /** @var Horario|null $horario */
+                $horario = $horariosSlot->shift();
+                $asignacion = $asignacionesVigentes->get($asignacionDocenteId);
 
-                        if ($horario) {
-                            $horario->delete();
-                        }
-
-                        continue;
+                if (! $asignacion) {
+                    foreach ($horariosSlot as $horarioExistente) {
+                        $horarioExistente->delete();
                     }
-
-                    $payload = [
-                        'asignacion_docente_id' => $asignacionDocenteId,
-                        'curso_etapa_materia_id' => $asignacion->curso_etapa_materia_id,
-                        'docente_id' => $asignacion->docente_id,
-                        'bloque_id' => $bloqueId,
-                        'dia_semana' => $dia,
-                        'fecha_desde' => $asignacion->fecha_desde,
-                        'hasta' => $asignacion->hasta,
-                    ];
 
                     if ($horario) {
-                        $horario->update($payload);
-                    } else {
-                        Horario::create($payload);
+                        $horario->delete();
                     }
 
-                    foreach ($horariosSlot as $duplicado) {
-                        $duplicado->delete();
-                    }
+                    continue;
+                }
+
+                $payload = [
+                    'asignacion_docente_id' => $asignacionDocenteId,
+                    'curso_etapa_materia_id' => $asignacion->curso_etapa_materia_id,
+                    'docente_id' => $asignacion->docente_id,
+                    'bloque_id' => $bloqueId,
+                    'dia_semana' => $dia,
+                    'fecha_desde' => $asignacion->fecha_desde,
+                    'hasta' => $asignacion->hasta,
+                ];
+
+                if ($horario) {
+                    $horario->update($payload);
+                } else {
+                    Horario::create($payload);
+                }
+
+                foreach ($horariosSlot as $duplicado) {
+                    $duplicado->delete();
                 }
             }
         }
@@ -328,10 +240,12 @@ class CursoEtapaHorarioController extends Controller
     public function ajaxCreateAsignacion(Request $request, CursoEtapa $cursoEtapa)
     {
         $data = $request->validate([
+            'asignacion_id' => ['nullable', 'integer'],
             'curso_etapa_materia_id' => ['required', 'integer'],
             'docente_id' => ['required', 'integer'],
             'situacion_revista' => ['required', 'in:INT,SUP,PRO'],
             'fecha_desde' => ['required', 'date'],
+            'horas_catedra' => ['nullable', 'integer', 'min:0', 'max:255'],
             'hasta' => ['nullable', 'string', 'max:50'],
         ]);
 
@@ -345,18 +259,81 @@ class CursoEtapaHorarioController extends Controller
             return response()->json(['error' => 'La materia no pertenece a esta etapa del curso.'], 422);
         }
 
+        $horasCatedra = blank($data['horas_catedra'] ?? null)
+            ? 0
+            : (int) $data['horas_catedra'];
+
+        if ((int) ($cursoEtapaMateria->horas_catedra ?? 0) !== $horasCatedra) {
+            $cursoEtapaMateria->update([
+                'horas_catedra' => $horasCatedra,
+            ]);
+        }
+
         // Verificar docente
         if (! Docente::query()->where('id', $data['docente_id'])->exists()) {
             return response()->json(['error' => 'Docente inválido.'], 422);
         }
 
-        $asignacion = AsignacionDocente::create([
+        $asignacionSolicitada = null;
+
+        if (filled($data['asignacion_id'] ?? null)) {
+            $asignacionSolicitada = AsignacionDocente::query()
+                ->where('id', (int) $data['asignacion_id'])
+                ->whereIn('curso_etapa_materia_id', function ($query) use ($cursoEtapa) {
+                    $query->select('id')
+                        ->from('curso_etapa_materia')
+                        ->where('curso_etapa_id', $cursoEtapa->id);
+                })
+                ->activas()
+                ->first();
+
+            if (! $asignacionSolicitada) {
+                return response()->json(['error' => 'La asignación que intentás editar no es válida o ya no está activa.'], 422);
+            }
+        }
+
+        // Regla de negocio: una materia del curso-etapa no debe quedar con más de un docente activo.
+        // Si ya existe asignación activa para esa materia, se reutiliza y se actualiza.
+        $asignacionExistenteMateria = AsignacionDocente::query()
+            ->where('curso_etapa_materia_id', $data['curso_etapa_materia_id'])
+            ->activas()
+            ->orderByDesc('id')
+            ->first();
+
+        $asignacion = null;
+
+        if (
+            $asignacionSolicitada
+            && (int) $asignacionSolicitada->curso_etapa_materia_id === (int) $data['curso_etapa_materia_id']
+        ) {
+            $asignacion = $asignacionSolicitada;
+        } elseif ($asignacionExistenteMateria) {
+            $asignacion = $asignacionExistenteMateria;
+        }
+
+        $payload = [
             'curso_etapa_materia_id' => $data['curso_etapa_materia_id'],
             'docente_id' => $data['docente_id'],
             'situacion_revista' => $data['situacion_revista'],
             'fecha_desde' => $data['fecha_desde'],
             'hasta' => $data['hasta'] ?? null,
-        ]);
+        ];
+
+        if ($asignacion) {
+            $asignacion->update($payload);
+        } else {
+            $asignacion = AsignacionDocente::create($payload);
+        }
+
+        // Si ya tenía bloques cargados, reflejar de inmediato docente/fechas al editar la asignación.
+        Horario::query()
+            ->where('asignacion_docente_id', $asignacion->id)
+            ->update([
+                'curso_etapa_materia_id' => $asignacion->curso_etapa_materia_id,
+                'docente_id' => $asignacion->docente_id,
+                'fecha_desde' => $asignacion->fecha_desde,
+                'hasta' => $asignacion->hasta,
+            ]);
 
         $materiaNombre = $cursoEtapaMateria->cursoMateria?->materia?->nombre ?? ('Materia #' . $cursoEtapaMateria->id);
         $docente = Docente::find($data['docente_id']);

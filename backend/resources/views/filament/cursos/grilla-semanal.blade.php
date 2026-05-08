@@ -1,11 +1,9 @@
 <div class="grillaContainer">
-    <h2>2 Grilla de Horarios</h2>
-    <p>Seleccioná una asignación (Materia - Docente) en cada bloque y día.</p>
     <div style="overflow:auto;">
         <table>
             <thead>
                 <tr>
-                    <th class="bloque">Bloque</th>
+                    <th class="bloque">Horarios</th>
                     @foreach($diasSemana as $dia)
                         <th>{{ $dia }}</th>
                     @endforeach
@@ -15,8 +13,12 @@
                 @foreach($bloques as $bloque)
                     <tr>
                         <td class="bloque">
-                            <strong>Bloque {{ $bloque->orden }}</strong><br>
-                            <span class="hint">{{ $bloque->hora_inicio }} - {{ $bloque->hora_fin }}</span>
+                        
+                           <span class="hint">
+                        {{ \Carbon\Carbon::parse($bloque->hora_inicio)->format('H:i') }} 
+                         <br>
+                        {{ \Carbon\Carbon::parse($bloque->hora_fin)->format('H:i') }}
+                            </span>
                         </td>
                         @foreach($diasSemana as $dia)
                             @php
@@ -33,10 +35,16 @@
                                             $materia = $partes[0] ?? '';
                                             $docente = $partes[1] ?? '';
                                         @endphp
-                                        <div>
+                                        <button
+                                            type="button"
+                                            class="slot-assigned btn-edit-slot"
+                                            data-dia="{{ $dia }}"
+                                            data-bloque="{{ $bloque->id }}"
+                                            data-asignacion-id="{{ $slotValue }}"
+                                        >
                                             <strong>{{ $materia }}</strong><br>
                                             <span class="hint">{{ $docente }}</span>
-                                        </div>
+                                        </button>
                                     @else
                                         <button type="button" class="btn btn-ghost btn-assign" data-dia="{{ $dia }}" data-bloque="{{ $bloque->id }}">+</button>
                                     @endif
@@ -50,7 +58,6 @@
     </div>
 
     <div class="actions" style="margin-top: 12px;">
-        <button type="submit" class="btn btn-save">Guardar</button>
-        <span class="hint">La grilla solo usa asignaciones ya definidas en la sección superior.</span>
+        <span class="hint">Los cambios se guardan al usar "Crear y asignar".</span>
     </div>
 </div>

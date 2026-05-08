@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\CursoEtapa;
 use App\Models\CursoEtapaMateria;
+use App\Models\CursoMateria;
 use Illuminate\Database\Seeder;
 
 class HorariasPrimerAnioSeeder extends Seeder
@@ -29,14 +31,19 @@ class HorariasPrimerAnioSeeder extends Seeder
             return;
         }
 
+        $creadas = $this->crearCursoEtapaMateriasPrimerAnio();
+        $this->command->info("CursoEtapaMateria creadas para 1°: {$creadas}");
+
         $normMap = [];
         foreach ($map as $name => $hours) {
             $normMap[$this->normalizar($name)] = (int) $hours;
         }
 
+        $actualizadas = 0;
+
         CursoEtapaMateria::with(['cursoEtapa.curso', 'cursoMateria.materia'])
             ->get()
-            ->each(function (CursoEtapaMateria $cem) use ($normMap) {
+            ->each(function (CursoEtapaMateria $cem) use ($normMap, &$actualizadas) {
                 $cursoNombre = $cem->cursoEtapa?->curso?->nombre ?? null;
                 if ($cursoNombre !== '1°') {
                     return;
@@ -51,10 +58,50 @@ class HorariasPrimerAnioSeeder extends Seeder
                 if (isset($normMap[$key])) {
                     $cem->horas_catedra = $normMap[$key];
                     $cem->save();
-                    $this->command->info("Actualizada horas: {$materiaNombre} -> {$normMap[$key]}");
+                    $actualizadas++;
                 }
             });
 
+        if ($actualizadas === 0) {
+            $this->command->warn('No se actualizaron horas cátedra. Revisá coincidencias entre nombres de materias y config/horas_catedra.php.');
+        } else {
+            $this->command->info("Horas cátedra actualizadas: {$actualizadas}");
+        }
+
         $this->command->info('Seeder HorariasPrimerAnioSeeder finalizado.');
+    }
+
+    /**
+     * Garantiza la materialización de curso_etapa_materia para 1° año.
+     */
+    private function crearCursoEtapaMateriasPrimerAnio(): int
+    {
+        $creadas = 0;
+
+        $cursoEtapas = CursoEtapa::query()
+            ->with(['curso:id,nombre', 'modulo:id'])
+            ->whereHas('curso', fn ($q) => $q->where('nombre', '1°'))
+            ->whereNotNull('modulo_id')
+            ->get(['id', 'curso_id', 'modulo_id']);
+
+        foreach ($cursoEtapas as $cursoEtapa) {
+            $cursoMaterias = CursoMateria::query()
+                ->where('curso_id', $cursoEtapa->curso_id)
+                ->whereHas('materia', fn ($q) => $q->where('modulo_id', $cursoEtapa->modulo_id))
+                ->get(['id']);
+
+            foreach ($cursoMaterias as $cursoMateria) {
+                $cem = CursoEtapaMateria::firstOrCreate([
+                    'curso_etapa_id' => $cursoEtapa->id,
+                    'curso_materia_id' => $cursoMateria->id,
+                ]);
+
+                if ($cem->wasRecentlyCreated) {
+                    $creadas++;
+                }
+            }
+        }
+
+        return $creadas;
     }
 }

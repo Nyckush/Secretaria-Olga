@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\CursoEtapa;
 use App\Models\CursoEtapaMateria;
+use App\Models\CursoMateria;
 use Illuminate\Database\Seeder;
 
 class HorariasTercerAnioSeeder extends Seeder
@@ -26,6 +28,9 @@ class HorariasTercerAnioSeeder extends Seeder
             return;
         }
 
+        $creadas = $this->crearCursoEtapaMateriasPorAnio('3°');
+        $this->command->info("CursoEtapaMateria creadas para 3°: {$creadas}");
+
         // Divisiones que corresponden a cada orientación (formato '3° X°')
         $orientacionEconomia = [
             '3° 1°','3° 4°','3° 6°','3° 7°','3° 9°','3° 10°'
@@ -45,9 +50,12 @@ class HorariasTercerAnioSeeder extends Seeder
             $normMapCiencias[$this->normalizar($k)] = (int) $v;
         }
 
+        $actualizadasEconomia = 0;
+        $actualizadasCiencias = 0;
+
         CursoEtapaMateria::with(['cursoEtapa.curso', 'cursoMateria.materia'])
             ->get()
-            ->each(function (CursoEtapaMateria $cem) use ($orientacionEconomia, $orientacionCiencias, $normMapEconomia, $normMapCiencias) {
+            ->each(function (CursoEtapaMateria $cem) use ($orientacionEconomia, $orientacionCiencias, $normMapEconomia, $normMapCiencias, &$actualizadasEconomia, &$actualizadasCiencias) {
                 $curso = $cem->cursoEtapa?->curso ?? null;
                 if (! $curso) return;
                 if (($curso->nombre ?? null) !== '3°') return;
@@ -63,7 +71,7 @@ class HorariasTercerAnioSeeder extends Seeder
                     if (isset($normMapEconomia[$key])) {
                         $cem->horas_catedra = $normMapEconomia[$key];
                         $cem->save();
-                        $this->command->info("[3° Economía] {$materiaNombre} -> {$normMapEconomia[$key]}");
+                        $actualizadasEconomia++;
                     }
                     return;
                 }
@@ -72,7 +80,7 @@ class HorariasTercerAnioSeeder extends Seeder
                     if (isset($normMapCiencias[$key])) {
                         $cem->horas_catedra = $normMapCiencias[$key];
                         $cem->save();
-                        $this->command->info("[3° Ciencias] {$materiaNombre} -> {$normMapCiencias[$key]}");
+                        $actualizadasCiencias++;
                     }
                     return;
                 }
@@ -80,6 +88,45 @@ class HorariasTercerAnioSeeder extends Seeder
                 // Si la división no está en ninguna lista, no hacemos nada.
             });
 
+        $totalActualizadas = $actualizadasEconomia + $actualizadasCiencias;
+        if ($totalActualizadas === 0) {
+            $this->command->warn('No se actualizaron horas cátedra de 3°. Revisá coincidencias con config/horas_catedra_tercer_anio.php.');
+        } else {
+            $this->command->info("Horas 3° Economía actualizadas: {$actualizadasEconomia}");
+            $this->command->info("Horas 3° Ciencias actualizadas: {$actualizadasCiencias}");
+            $this->command->info("Horas cátedra 3° actualizadas (total): {$totalActualizadas}");
+        }
+
         $this->command->info('Seeder HorariasTercerAnioSeeder finalizado.');
+    }
+
+    private function crearCursoEtapaMateriasPorAnio(string $nombreCurso): int
+    {
+        $creadas = 0;
+
+        $cursoEtapas = CursoEtapa::query()
+            ->whereHas('curso', fn ($q) => $q->where('nombre', $nombreCurso))
+            ->whereNotNull('modulo_id')
+            ->get(['id', 'curso_id', 'modulo_id']);
+
+        foreach ($cursoEtapas as $cursoEtapa) {
+            $cursoMaterias = CursoMateria::query()
+                ->where('curso_id', $cursoEtapa->curso_id)
+                ->whereHas('materia', fn ($q) => $q->where('modulo_id', $cursoEtapa->modulo_id))
+                ->get(['id']);
+
+            foreach ($cursoMaterias as $cursoMateria) {
+                $cem = CursoEtapaMateria::firstOrCreate([
+                    'curso_etapa_id' => $cursoEtapa->id,
+                    'curso_materia_id' => $cursoMateria->id,
+                ]);
+
+                if ($cem->wasRecentlyCreated) {
+                    $creadas++;
+                }
+            }
+        }
+
+        return $creadas;
     }
 }

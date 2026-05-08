@@ -21,11 +21,6 @@
             <a href="{{ url()->previous() }}" class="btn btn-back">Volver</a>
         </div>
 
-        <div class="tabs" style="display:flex; gap:8px; margin-bottom:12px;">
-            <button type="button" id="tab-grilla-btn" class="btn btn-back" aria-pressed="true">Grilla semanal</button>
-            <button type="button" id="tab-asign-btn" class="btn btn-back" aria-pressed="false">Asignación docentes</button>
-        </div>
-
         @if(session('status'))
             <div class="flash flash-ok">{{ session('status') }}</div>
         @endif
@@ -43,49 +38,16 @@
 
         <form id="form-grilla" method="POST" action="{{ route('curso-etapas.horarios.store', ['cursoEtapa' => $cursoEtapa]) }}">
             @csrf
-            <input type="hidden" name="save_section" value="grilla">
             @include('filament.cursos.grilla-semanal')
-        </form>
-
-        <form id="form-asign" method="POST" action="{{ route('curso-etapas.horarios.store', ['cursoEtapa' => $cursoEtapa]) }}" style="display:none;">
-            @csrf
-            <input type="hidden" name="save_section" value="asignaciones">
-            @include('filament.cursos.asignacion-docentes')
         </form>
 
         <script>
             (function() {
-                const grillaBtn = document.getElementById('tab-grilla-btn');
-                const asignBtn = document.getElementById('tab-asign-btn');
                 const formGrilla = document.getElementById('form-grilla');
-                const formAsign = document.getElementById('form-asign');
 
-                function showGrilla() {
+                // Mantener la referencia usada por el resto del script.
+                if (formGrilla) {
                     formGrilla.style.display = '';
-                    formAsign.style.display = 'none';
-                    grillaBtn.classList.add('btn-save');
-                    asignBtn.classList.remove('btn-save');
-                    grillaBtn.setAttribute('aria-pressed', 'true');
-                    asignBtn.setAttribute('aria-pressed', 'false');
-                }
-
-                function showAsign() {
-                    formGrilla.style.display = 'none';
-                    formAsign.style.display = '';
-                    asignBtn.classList.add('btn-save');
-                    grillaBtn.classList.remove('btn-save');
-                    asignBtn.setAttribute('aria-pressed', 'true');
-                    grillaBtn.setAttribute('aria-pressed', 'false');
-                }
-
-                grillaBtn.addEventListener('click', showGrilla);
-                asignBtn.addEventListener('click', showAsign);
-
-                const initial = '{{ old("save_section", "grilla") }}';
-                if (initial === 'asignaciones') {
-                    showAsign();
-                } else {
-                    showGrilla();
                 }
             })();
         </script>
@@ -93,17 +55,22 @@
         <!-- Modal para crear asignación rápida -->
         <div id="modal-asignar" class="formModal">
             <div class="modalForm">
-                <h3 style="margin-top:0;">Crear asignación rápida</h3>
+                <h3 id="modal-title" style="margin-top:0;">Crear asignación rápida</h3>
                 <form id="form-ajax-asign" >
-                    <label>
+                    <input type="hidden" name="asignacion_id" id="asignacion-id">
+                  <label>
                         Materia
                         <select name="curso_etapa_materia_id" id="materia-select" required>
+                            <option value="" selected disabled hidden>Sin Materia asignada</option>
+
                             @foreach($cursoEtapaMaterias as $cem)
-                                <option value="{{ $cem->id }}">{{ $cem->cursoMateria?->materia?->nombre ?? ('Materia #' . $cem->id) }}</option>
+                                <option value="{{ $cem->id }}">
+                                    {{ $cem->cursoMateria?->materia?->nombre ?? ('Materia #' . $cem->id) }}
+                                </option>
                             @endforeach
                         </select>
-                    </label>
-                    <label style="position:relative;">
+                 </label>
+                                        <label style="position:relative;">
                         Docente
                         <input type="text" id="docente-search" placeholder="Buscar docente por apellido o nombre" autocomplete="off" required>
                         <input type="hidden" name="docente_id" id="docente-id">
@@ -122,6 +89,10 @@
                         <input type="date" name="fecha_desde" id="fecha-desde" required>
                     </label>
                     <label>
+                        Hs. Cátedra
+                        <input type="number" name="horas_catedra" id="horas-catedra" min="0" max="255" step="1" placeholder="0">
+                    </label>
+                    <label>
                         Hasta
                         <input type="text" name="hasta" id="hasta" maxlength="50" placeholder="Ejemplo: fin del ciclo">
                     </label>
@@ -138,27 +109,171 @@
             (function(){
                 const modal = document.getElementById('modal-asignar');
                 const formAjax = document.getElementById('form-ajax-asign');
+                const formGrilla = document.getElementById('form-grilla');
                 const cancelBtn = document.getElementById('modal-cancel');
-                let targetSelect = null;
+                const modalTitle = document.getElementById('modal-title');
+                const submitBtn = formAjax.querySelector('button[type="submit"]');
+                const submitBtnCreateText = submitBtn ? submitBtn.textContent : 'Crear y asignar';
+                const submitBtnEditText = 'Guardar cambios';
+                let submitBtnActionText = submitBtnCreateText;
+                const draftKey = 'curso-etapa-asignacion-draft-{{ $cursoEtapa->id }}';
+                const materiaSelect = document.getElementById('materia-select');
+                const docenteSearchInput = document.getElementById('docente-search');
+                const docenteIdInput = document.getElementById('docente-id');
+                const asignacionIdInput = document.getElementById('asignacion-id');
+                const situacionRevistaInput = document.getElementById('situacion-revista');
+                const fechaDesdeInput = document.getElementById('fecha-desde');
+                const horasCatedraInput = document.getElementById('horas-catedra');
+                const hastaInput = document.getElementById('hasta');
+                let isSubmitting = false;
                 let targetInput = null;
                 let targetCell = null;
                 let targetDia = null;
                 let targetBloque = null;
 
-                function openModalFor(inputEl) {
-                    targetSelect = null; // No hay select en slots vacíos
+                function setSubmitting(state) {
+                    isSubmitting = state;
+
+                    if (submitBtn) {
+                        submitBtn.disabled = state;
+                        submitBtn.textContent = state ? 'Guardando...' : submitBtnActionText;
+                    }
+
+                    if (cancelBtn) {
+                        cancelBtn.disabled = state;
+                    }
+
+                    [materiaSelect, docenteSearchInput, situacionRevistaInput, fechaDesdeInput, horasCatedraInput, hastaInput]
+                        .forEach(function (el) {
+                            if (el) {
+                                el.disabled = state;
+                            }
+                        });
+                }
+
+                function saveDraft() {
+                    const draft = {
+                        asignacion_id: asignacionIdInput?.value || '',
+                        curso_etapa_materia_id: materiaSelect?.value || '',
+                        docente_id: docenteIdInput?.value || '',
+                        docente_label: docenteSearchInput?.value || '',
+                        situacion_revista: situacionRevistaInput?.value || '',
+                        fecha_desde: fechaDesdeInput?.value || '',
+                        horas_catedra: horasCatedraInput?.value || '',
+                        hasta: hastaInput?.value || '',
+                    };
+
+                    try {
+                        sessionStorage.setItem(draftKey, JSON.stringify(draft));
+                    } catch (error) {
+                        // Ignorar errores de almacenamiento local.
+                    }
+                }
+
+                function restoreDraft() {
+                    try {
+                        const raw = sessionStorage.getItem(draftKey);
+
+                        if (!raw) {
+                            return;
+                        }
+
+                        const draft = JSON.parse(raw);
+
+                        if (asignacionIdInput) {
+                            asignacionIdInput.value = draft.asignacion_id || '';
+                        }
+
+                        if (materiaSelect && draft.curso_etapa_materia_id) {
+                            materiaSelect.value = draft.curso_etapa_materia_id;
+                        }
+
+                        if (docenteSearchInput) {
+                            docenteSearchInput.value = draft.docente_label || '';
+                        }
+
+                        if (docenteIdInput) {
+                            docenteIdInput.value = draft.docente_id || '';
+                        }
+
+                        if (situacionRevistaInput && draft.situacion_revista) {
+                            situacionRevistaInput.value = draft.situacion_revista;
+                        }
+
+                        if (fechaDesdeInput) {
+                            fechaDesdeInput.value = draft.fecha_desde || '';
+                        }
+
+                        if (horasCatedraInput) {
+                            horasCatedraInput.value = draft.horas_catedra || '';
+                        }
+
+                        if (hastaInput) {
+                            hastaInput.value = draft.hasta || '';
+                        }
+                    } catch (error) {
+                        // Ignorar borradores inválidos.
+                    }
+                }
+
+                function setModalMode(mode) {
+                    const isEditMode = mode === 'edit';
+                    submitBtnActionText = isEditMode ? submitBtnEditText : submitBtnCreateText;
+
+                    if (modalTitle) {
+                        modalTitle.textContent = isEditMode ? 'Editar asignación' : 'Crear asignación rápida';
+                    }
+
+                    if (submitBtn && !isSubmitting) {
+                        submitBtn.textContent = submitBtnActionText;
+                    }
+                }
+
+                function fillFormFromAsignacion(asignacion) {
+                    if (!asignacion) {
+                        return;
+                    }
+
+                    asignacionIdInput.value = asignacion.id || '';
+                    materiaSelect.value = asignacion.curso_etapa_materia_id || '';
+                    docenteIdInput.value = asignacion.docente_id || '';
+
+                    const docente = DOCENTES.find(d => String(d.id) === String(asignacion.docente_id));
+                    docenteSearchInput.value = docente ? docente.label : '';
+                    situacionRevistaInput.value = asignacion.situacion_revista || 'INT';
+                    fechaDesdeInput.value = asignacion.fecha_desde || '';
+                    horasCatedraInput.value = asignacion.horas_catedra ?? '';
+                    hastaInput.value = asignacion.hasta || '';
+                }
+
+                function openModalFor(inputEl, options = {}) {
                     targetInput = inputEl;
+
+                    if (options.assignmentId) {
+                        setModalMode('edit');
+                        const asignacion = ASIGNACIONES_POR_ID[String(options.assignmentId)] || ASIGNACIONES_POR_ID[options.assignmentId];
+                        fillFormFromAsignacion(asignacion);
+                    } else {
+                        setModalMode('create');
+                        restoreDraft();
+                        if (asignacionIdInput) {
+                            asignacionIdInput.value = '';
+                        }
+                    }
+
                     modal.style.display = 'flex';
                 }
 
                 function closeModal() {
+                    if (isSubmitting) {
+                        return;
+                    }
+
                     modal.style.display = 'none';
-                    targetSelect = null;
                     targetInput = null;
                     targetCell = null;
                     targetDia = null;
                     targetBloque = null;
-                    formAjax.reset();
                 }
 
                 cancelBtn.addEventListener('click', closeModal);
@@ -175,49 +290,71 @@
                     openModalFor(input);
                 });
 
-                document.addEventListener('change', function(e){
-                    const select = e.target.closest('select.slot-select');
-                    if (!select) return;
-                    const cell = select.closest('td');
+                document.addEventListener('click', function(e){
+                    const btn = e.target.closest('.btn-edit-slot');
+                    if (!btn) return;
+                    const cell = btn.closest('td');
                     const input = cell ? cell.querySelector('input.slot-value') : null;
                     if (!input) return;
-                    input.value = select.value || '';
+                    targetCell = cell;
+                    targetDia = btn.dataset.dia;
+                    targetBloque = btn.dataset.bloque;
+                    openModalFor(input, { assignmentId: btn.dataset.asignacionId });
                 });
 
 
 
                 const DOCENTES = @json($docentes->map(fn($d) => ['id' => $d->id, 'label' => trim(($d->apellido ?? '') . ', ' . ($d->nombre ?? ''). ' ( dni: ' . ($d->dni ?? 'sin doc') . ')')]));
                 const ASIGNACIONES_POR_MATERIA = @json($asignacionesPorMateria);
+                const ASIGNACIONES_POR_ID = @json($asignacionesPorId);
+                const HORAS_POR_MATERIA = @json($cursoEtapaMaterias->mapWithKeys(fn($cem) => [$cem->id => $cem->horas_catedra]));
+
+                function autocompletarHorasPorMateria(cemId, force = false) {
+                    if (!cemId || !horasCatedraInput) {
+                        return;
+                    }
+
+                    const asignacion = ASIGNACIONES_POR_MATERIA[cemId];
+                    const horasSugeridas = asignacion?.horas_catedra ?? (HORAS_POR_MATERIA[cemId] ?? '');
+
+                    if (force || horasCatedraInput.value === '') {
+                        horasCatedraInput.value = horasSugeridas;
+                    }
+                }
 
                 // Autocomplete al cambiar materia
-                document.getElementById('materia-select').addEventListener('change', function() {
+                materiaSelect.addEventListener('change', function() {
                     const cemId = this.value;
                     const asignacion = ASIGNACIONES_POR_MATERIA[cemId];
                     if (asignacion) {
                         // Llenar docente
                         const docente = DOCENTES.find(d => d.id == asignacion.docente_id);
                         if (docente) {
-                            document.getElementById('docente-search').value = docente.label;
-                            document.getElementById('docente-id').value = docente.id;
-                            console.log('Asignación encontrada para materia', cemId, '-> Docente:', docente.label);
+                            docenteSearchInput.value = docente.label;
+                            docenteIdInput.value = docente.id;
                         }
                         // Situación revista
-                        document.getElementById('situacion-revista').value = asignacion.situacion_revista;
+                        situacionRevistaInput.value = asignacion.situacion_revista;
                         // Fecha desde
-                        document.getElementById('fecha-desde').value = asignacion.fecha_desde;
+                        fechaDesdeInput.value = asignacion.fecha_desde;
+                        // Hs. cátedra
+                        autocompletarHorasPorMateria(cemId, true);
                         // Hasta
-                        document.getElementById('hasta').value = asignacion.hasta || '';
+                        hastaInput.value = asignacion.hasta || '';
 
 
 
                     } else {
                         // Limpiar si no hay asignación
-                        document.getElementById('docente-search').value = '';
-                        document.getElementById('docente-id').value = '';
-                        document.getElementById('situacion-revista').value = '';
-                        document.getElementById('fecha-desde').value = '';
-                        document.getElementById('hasta').value = '';
+                        docenteSearchInput.value = '';
+                        docenteIdInput.value = '';
+                        situacionRevistaInput.value = '';
+                        fechaDesdeInput.value = '';
+                        autocompletarHorasPorMateria(cemId, true);
+                        hastaInput.value = '';
                     }
+
+                    saveDraft();
                 });
 
                 (function initDocenteSearch(){
@@ -234,6 +371,7 @@
                                 const hidden = inputEl.parentElement.querySelector('input[type="hidden"]');
                                 if (hidden) hidden.value = it.id;
                                 suggestionsEl.style.display = 'none';
+                                saveDraft();
                             });
                             suggestionsEl.appendChild(div);
                         }
@@ -242,14 +380,9 @@
 
                     document.addEventListener('input', function(e){
                         const el = e.target;
-                        if (!el.matches('.docente-search-row') && el.id !== 'docente-search') return;
+                        if (el.id !== 'docente-search') return;
                         const q = el.value.trim().toLowerCase();
-                        let suggestionsEl;
-                        if (el.id === 'docente-search') {
-                            suggestionsEl = document.getElementById('docente-suggestions');
-                        } else {
-                            suggestionsEl = el.parentElement.querySelector('.docente-suggestions-row');
-                        }
+                        const suggestionsEl = document.getElementById('docente-suggestions');
                         if (!suggestionsEl) return;
                         if (!q) { suggestionsEl.style.display = 'none'; return; }
                         const results = DOCENTES.filter(d => d.label.toLowerCase().includes(q)).slice(0, 20);
@@ -261,17 +394,28 @@
                             const modalSug = document.getElementById('docente-suggestions');
                             if (modalSug) modalSug.style.display = 'none';
                         }
-                        if (!e.target.closest('.docente-search-row') && !e.target.closest('.docente-suggestions-row')) {
-                            document.querySelectorAll('.docente-suggestions-row').forEach(s => s.style.display = 'none');
-                        }
                     });
                 })();
+
+                [docenteSearchInput, situacionRevistaInput, fechaDesdeInput, horasCatedraInput, hastaInput].forEach(function (el) {
+                    if (!el) {
+                        return;
+                    }
+
+                    const eventName = el.tagName === 'SELECT' ? 'change' : 'input';
+                    el.addEventListener(eventName, saveDraft);
+                });
+
+                restoreDraft();
+                setModalMode('create');
+                autocompletarHorasPorMateria(materiaSelect?.value);
 
                 formAjax.addEventListener('submit', async function(e){
                     e.preventDefault();
                     if (!targetInput) return;
+                    if (isSubmitting) return;
 
-                    const docenteIdVal = document.getElementById('docente-id').value;
+                    const docenteIdVal = docenteIdInput.value;
                     if (!docenteIdVal) {
                         alert('Seleccioná un docente de la lista.');
                         return;
@@ -279,6 +423,8 @@
 
                     const url = '{{ route("curso-etapas.asignaciones.ajax", ["cursoEtapa" => $cursoEtapa]) }}';
                     const formData = new FormData(formAjax);
+                    setSubmitting(true);
+                    saveDraft();
 
                     try {
                         const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -294,18 +440,11 @@
                         if (!res.ok) {
                             const err = await res.json().catch(()=>({error:'Error'}));
                             alert(err.error || 'Error al crear asignación');
+                            setSubmitting(false);
                             return;
                         }
 
                         const data = await res.json();
-
-                        const opt = document.createElement('option');
-                        opt.value = data.id;
-                        opt.textContent = data.etiqueta;
-                        if (targetSelect) {
-                            targetSelect.appendChild(opt);
-                            targetSelect.value = String(data.id);
-                        }
 
                         targetInput.value = String(data.id);
 
@@ -314,14 +453,21 @@
                             const partes = data.etiqueta.split(' - ');
                             const materia = partes[0] || '';
                             const docente = partes[1] || '';
-                            const newContent = `<div><strong>${materia}</strong><br><span class="hint">${docente}</span></div>`;
+                            const newContent = `<button type="button" class="slot-assigned btn-edit-slot" data-dia="${targetDia}" data-bloque="${targetBloque}" data-asignacion-id="${data.id}"><strong>${materia}</strong><br><span class="hint">${docente}</span></button>`;
                             targetCell.innerHTML = `<div style="display:flex; gap:6px; align-items:start; flex-direction:column;"><input type="hidden" name="slots[${targetDia}][${targetBloque}]" class="slot-value" value="${data.id}">${newContent}</div>`;
                         }
 
+                        if (formGrilla) {
+                            formGrilla.submit();
+                            return;
+                        }
+
+                        setSubmitting(false);
                         closeModal();
                     } catch (err) {
                         console.error(err);
                         alert('Error al crear asignación');
+                        setSubmitting(false);
                     }
                 });
             })();

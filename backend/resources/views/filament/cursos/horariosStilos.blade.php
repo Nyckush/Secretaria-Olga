@@ -54,15 +54,6 @@ th, td { border: 1px solid #e5e7eb; vertical-align: top; text-align: left; paddi
 
 .dark th, .dark td { border-color: var(--ev-border-dark); }
 
-/* Anchos específicos para la tabla de asignaciones */
-.col-materia { width: 20%; }
-.col-docente { width: 34%; }
-.col-sit { width: 10%; }
-
-@media (max-width: 900px) {
-    .col-materia, .col-docente, .col-sit { width: auto; }
-}
-
 thead th { background: #f3f4f6; }
 .dark thead th { background: var(--ev-gray-dark); color: #e5e7eb; }
 
@@ -70,7 +61,10 @@ input, select { width: 100%; min-height: 34px; border: 1px solid #d1d5db; border
 
 .dark input, .dark select {  background: var(--ev-surface-dark-alt); border-color: var(--ev-border-dark); color: #e5e7eb; }
 
-.bloque { min-width: 170px; }
+.bloque { min-width:0; text-align: center; background: #f9fafb; }
+.dark .bloque { background: var(--ev-surface-dark); color:white; }   
+.bloque span { display: block; font-weight: bold; color: #6b7280; text-align: center; }
+.dark .bloque span { color: #e5e7eb; }
 
 .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 
@@ -126,6 +120,32 @@ input, select { width: 100%; min-height: 34px; border: 1px solid #d1d5db; border
 .dark .btn-ghost:hover { background: color-mix(in oklab, var(--ev-border-dark) 50%, transparent 50%); }
 
 .btn[disabled], .btn.disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+.slot-assigned {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 8px;
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.slot-assigned:hover {
+    background: color-mix(in oklab, var(--ev-blue-light) 45%, transparent 55%);
+    border-color: var(--ev-blue-border);
+}
+
+.slot-assigned:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ev-blue) 16%, transparent);
+}
+
+.dark .slot-assigned:hover {
+    background: color-mix(in oklab, var(--ev-blue) 24%, transparent 76%);
+    border-color: var(--ev-blue-border);
+}
 
 .flash { padding: 10px; border-radius: 6px; margin-bottom: 10px; }
 
@@ -242,44 +262,6 @@ input, select { width: 100%; min-height: 34px; border: 1px solid #d1d5db; border
     border-color: var(--ev-border-dark);
     color: #e5e7eb;
 
-}
-
-
-
-
-
-
-.relative{
-    position:relative;
-   
-}
-
-.docente-search-row {
-
-
-    width: 100%;
-    min-height: 34px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 5px 8px;
-    background: #fff;
-}
-
-.docente-suggestions-row{
-    position:absolute; 
-    left:0; 
-    right:0; 
-    background:#fff; 
-    border:1px solid #ddd; 
-   
-    overflow:auto; 
-    z-index:30; 
-   
-}
-.dark .docente-suggestions-row{
-    background: var(--ev-surface-dark-alt);
-    border-color: var(--ev-border-dark);
-    color: #e5e7eb;
 }
 
 
