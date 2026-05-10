@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Cursos\CursoEtapaHorarioController;
+use App\Http\Controllers\Reportes\TareasPedagogicasController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -8,6 +9,9 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth'])->group(function (): void {
+    Route::get('/admin/reportes/tareas-pedagogicas/c1/pdf-preview', [TareasPedagogicasController::class, 'previewC1Pdf'])
+        ->name('reportes.tareas-pedagogicas.c1.pdf-preview');
+
     Route::get('/admin/curso-etapas/{cursoEtapa}/horarios', [CursoEtapaHorarioController::class, 'show'])
         ->name('curso-etapas.horarios');
 

@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre', 150);
             $table->integer('horas_semanales')->unsigned()->default(3);
+            $table->boolean('tarea_pedagogica')->default(false);
             $table->foreignId('modulo_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

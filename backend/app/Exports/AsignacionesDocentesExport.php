@@ -175,7 +175,7 @@ class AsignacionesDocentesExport implements FromQuery, WithHeadings, WithMapping
                 // --- Ajuste del Logo (Derecha) ---
                 $logoEscuela = new Drawing();
                 $logoEscuela->setName('Logo Escuela');
-                $logoEscuela->setPath(public_path('images/Olga aredez.png'));
+                $logoEscuela->setPath(public_path('images/Olga.png'));
                 $logoEscuela->setHeight(75); 
                 $logoEscuela->setCoordinates('O1'); // Si quieres que esté más a la izquierda, cámbialo a 'N1'
                 $logoEscuela->setOffsetX(20); // Ajusta para moverlo hacia la izquierda (acercarlo al texto)

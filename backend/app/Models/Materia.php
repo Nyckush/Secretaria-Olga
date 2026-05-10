@@ -13,6 +13,7 @@ class Materia extends Model
         'nombre',
         'horas_semanales',
         'modulo_id',
+        'tarea_pedagogica',
     ];
 
     public function cursoEtapaMaterias(): HasMany
