@@ -65,13 +65,18 @@ class CursoEtapasRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->headerActions([
-                CreateAction::make(),
+           
+                Action::make('vista_previa_pdf')
+                    ->label('Vista previa PDF')
+                    ->url(fn ($record = null): string => route('curso-etapas.horarios.pdf-preview', ['cursoEtapa' => $record ?? $this->getOwnerRecord()]))
+                    ->openUrlInNewTab(),
             ])
             ->recordActions([
                 Action::make('horarios')
                     ->label('Horarios')
                     ->url(fn ($record): string => route('curso-etapas.horarios', ['cursoEtapa' => $record]))
                     ->openUrlInNewTab(),
+                
                 EditAction::make(),
                 DeleteAction::make(),
             ])

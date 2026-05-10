@@ -10,10 +10,12 @@ use App\Models\CursoEtapaMateria;
 use App\Models\CursoMateria;
 use App\Models\Docente;
 use App\Models\Horario;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\Response;
 use Illuminate\View\View;
 
 class CursoEtapaHorarioController extends Controller
@@ -237,6 +239,63 @@ class CursoEtapaHorarioController extends Controller
             ->with('status', 'Horarios guardados correctamente.');
     }
 
+    public function previewPdf(CursoEtapa $cursoEtapa): Response
+    {
+        $cursoEtapa->load(['curso:id,nombre,division,turno,ciclo_lectivo']);
+
+        $curso = $cursoEtapa->curso;
+
+        $bloques = BloqueHorario::query()
+            ->orderBy('orden')
+            ->get(['id', 'orden', 'hora_inicio', 'hora_fin']);
+
+        $cursoEtapas = CursoEtapa::query()
+            ->with([
+                'etapa:id,nombre,orden',
+                'modulo:id,nombre',
+                'curso.anexo:id,nombre',
+            ])
+            ->where('curso_id', $curso->id)
+            ->get()
+            ->sortBy(fn ($ce) => $ce->etapa->orden ?? 0)
+            ->values();
+
+        $matricesPorCursoEtapa = [];
+
+        foreach ($cursoEtapas as $ce) {
+            $cursoEtapaMateriaIds = $this->obtenerOCrearCursoEtapaMaterias($ce)->pluck('id');
+
+            $horarios = Horario::query()
+                ->with([
+                    'bloque:id,orden,hora_inicio,hora_fin',
+                    'asignacionDocente:id,curso_etapa_materia_id,docente_id',
+                    'asignacionDocente.docente:id,nombre,apellido',
+                    'asignacionDocente.cursoEtapaMateria:id,curso_materia_id',
+                    'asignacionDocente.cursoEtapaMateria.cursoMateria:id,materia_id,periodo',
+                    'asignacionDocente.cursoEtapaMateria.cursoMateria.materia:id,nombre',
+                ])
+                ->whereIn('curso_etapa_materia_id', $cursoEtapaMateriaIds)
+                ->orderBy('bloque_id')
+                ->get(['id', 'asignacion_docente_id', 'curso_etapa_materia_id', 'bloque_id', 'dia_semana']);
+
+            $matricesPorCursoEtapa[$ce->id] = [
+                'C1' => $this->construirMatrizHoraria($horarios, 'C1'),
+                'C2' => $this->construirMatrizHoraria($horarios, 'C2'),
+            ];
+        }
+
+        $pdf = Pdf::loadView('filament.cursos.horarios-preview-pdf', [
+            'curso' => $curso,
+            'cursoEtapas' => $cursoEtapas,
+            'diasSemana' => self::DIAS_SEMANA,
+            'bloques' => $bloques,
+            'matricesPorCursoEtapa' => $matricesPorCursoEtapa,
+            'generadoEn' => now(),
+        ])->setPaper('a4', 'landscape');
+
+        return $pdf->stream("horarios-curso-{$curso->id}.pdf");
+    }
+
     public function ajaxCreateAsignacion(Request $request, CursoEtapa $cursoEtapa)
     {
         $data = $request->validate([
@@ -373,5 +432,32 @@ class CursoEtapaHorarioController extends Controller
             ->where('curso_etapa_id', $cursoEtapa->id)
             ->whereIn('curso_materia_id', $cursoMaterias->pluck('id'))
             ->get(['id', 'curso_materia_id', 'horas_catedra']);
+    }
+
+    private function construirMatrizHoraria(Collection $horarios, string $periodo): array
+    {
+        $matriz = [];
+
+        foreach ($horarios as $horario) {
+            $cursoMateriaPeriodo = $horario->asignacionDocente?->cursoEtapaMateria?->cursoMateria?->periodo;
+
+            if (! in_array($cursoMateriaPeriodo, ['A', $periodo], true)) {
+                continue;
+            }
+
+            $dia = (string) $horario->dia_semana;
+            $bloqueId = (int) $horario->bloque_id;
+            $materia = $horario->asignacionDocente?->cursoEtapaMateria?->cursoMateria?->materia?->nombre;
+            $docenteApellido = $horario->asignacionDocente?->docente?->apellido;
+            $docenteNombre = $horario->asignacionDocente?->docente?->nombre;
+            $docente = trim((string) $docenteApellido . ', ' . (string) $docenteNombre, ', ');
+
+            $matriz[$dia][$bloqueId] = [
+                'materia' => $materia,
+                'docente' => $docente,
+            ];
+        }
+
+        return $matriz;
     }
 }
