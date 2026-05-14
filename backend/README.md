@@ -64,3 +64,72 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Deploy Docker (produccion en VPS multi-proyecto)
+
+Este proyecto incluye artefactos de despliegue en `backend/`:
+
+- `Dockerfile` (multi-stage: build frontend + runtime PHP-FPM + imagen web Nginx)
+- `docker-compose.prod.yml` (app, web, queue, scheduler, postgres y redis)
+- `docker/nginx/default.conf` (Laravel/Filament con hardening base)
+- `docker/entrypoint.sh` (cache de Laravel, permisos y migraciones opcionales)
+
+### 1. Preparar entorno
+
+```bash
+cp .env.example .env
+```
+
+Ajustar al menos:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL=https://tu-dominio`
+- `APP_DOMAIN=tu-dominio`
+- `DB_*`
+- `REDIS_*`
+- `TRUSTED_PROXIES=*`
+
+### 2. Crear red compartida del reverse proxy (una sola vez en el VPS)
+
+```bash
+docker network create proxy
+```
+
+### 3. Build y arranque
+
+```bash
+docker compose -f docker-compose.prod.yml --project-name secretaria up -d --build
+```
+
+### 4. Migraciones y cache
+
+```bash
+docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
+```
+
+Para auto-migrar en arranque, usar `RUN_MIGRATIONS=true` en `.env`.
+
+### 5. Operacion diaria
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml logs -f app
+docker compose -f docker-compose.prod.yml logs -f queue
+docker compose -f docker-compose.prod.yml logs -f scheduler
+```
+
+### 6. Rollback rapido de imagen
+
+Publicar versiones con `APP_IMAGE_TAG`, luego:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+### Notas multi-proyecto en el mismo VPS
+
+- No se exponen puertos por proyecto; solo el proxy central publica `80/443`.
+- Cada proyecto usa su propio `COMPOSE_PROJECT_NAME`, base PostgreSQL y Redis.
+- La red externa `proxy` permite enrutar por dominio sin colision de puertos.
