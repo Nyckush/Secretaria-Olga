@@ -71,7 +71,7 @@ Este proyecto incluye artefactos de despliegue en `backend/`:
 
 - `Dockerfile` (multi-stage: build frontend + runtime PHP-FPM + imagen web Nginx)
 - `docker-compose.prod.yml` (app, web, queue, scheduler, postgres y redis)
-- `docker/nginx/default.conf` (Laravel/Filament con hardening base)
+- `docker/nginx.conf` (Laravel/Filament con hardening base)
 - `docker/entrypoint.sh` (cache de Laravel, permisos y migraciones opcionales)
 
 ### 1. Preparar entorno

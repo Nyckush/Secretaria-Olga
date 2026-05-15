@@ -75,6 +75,6 @@ FROM nginx:1.27.5-alpine AS web
 WORKDIR /var/www/html
 
 COPY --from=app /var/www/html/public ./public
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget -q --spider http://127.0.0.1/up || exit 1
