@@ -8,7 +8,7 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM php:8.3.7-fpm-alpine3.20 AS app
+FROM php:8.4-fpm-alpine AS app
 
 ENV APP_ENV=production
 ENV COMPOSER_ALLOW_SUPERUSER=1
