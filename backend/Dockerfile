@@ -16,6 +16,11 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN apk add --no-cache \
         bash \
         curl \
+        unzip \
+        zip \
+        git \
+        linux-headers \
+        $PHPIZE_DEPS \
         freetype-dev \
         icu-dev \
         libjpeg-turbo-dev \
@@ -24,8 +29,6 @@ RUN apk add --no-cache \
         libzip-dev \
         oniguruma-dev \
         postgresql-dev \
-        unzip \
-        zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         bcmath \
@@ -34,6 +37,7 @@ RUN apk add --no-cache \
         intl \
         mbstring \
         pcntl \
+        pdo \
         pdo_pgsql \
         zip \
     && pecl install redis \
