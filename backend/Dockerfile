@@ -8,77 +8,72 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-FROM php:8.4-fpm-alpine AS app
+FROM php:8.4-cli-alpine
 
 ENV APP_ENV=production
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
+WORKDIR /var/www/html
+
 RUN apk add --no-cache \
-        bash \
-        curl \
-        unzip \
-        zip \
-        git \
-        linux-headers \
-        $PHPIZE_DEPS \
-        freetype-dev \
-        icu-dev \
-        libjpeg-turbo-dev \
-        libpng-dev \
-        libxml2-dev \
-        libzip-dev \
-        oniguruma-dev \
-        postgresql-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" \
-        bcmath \
-        exif \
-        gd \
-        intl \
-        mbstring \
-        pcntl \
-        pdo \
-        pdo_pgsql \
-        zip \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && rm -rf /tmp/pear
+    bash \
+    curl \
+    unzip \
+    zip \
+    git \
+    linux-headers \
+    $PHPIZE_DEPS \
+    freetype-dev \
+    icu-dev \
+    libjpeg-turbo-dev \
+    libpng-dev \
+    libxml2-dev \
+    libzip-dev \
+    oniguruma-dev \
+    postgresql-dev
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+RUN docker-php-ext-install \
+    bcmath \
+    exif \
+    gd \
+    intl \
+    mbstring \
+    pcntl \
+    pdo \
+    pdo_pgsql \
+    zip
+
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 COPY --from=composer:2.8.8 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-
 COPY composer.json composer.lock ./
+
 RUN composer install \
-        --no-dev \
-        --no-interaction \
-        --prefer-dist \
-        --optimize-autoloader \
-        --no-scripts
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader
 
 COPY . .
+
+COPY .env.example .env
+
 COPY --from=frontend /var/www/html/public/build ./public/build
 
-RUN php artisan package:discover --ansi \
-    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R ug+rwx storage bootstrap/cache
+RUN mkdir -p storage/framework/cache \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
 
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint
-RUN chmod +x /usr/local/bin/entrypoint
+RUN chmod -R 775 storage bootstrap/cache
 
-EXPOSE 9000
+RUN php artisan key:generate
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD php-fpm -t || exit 1
+EXPOSE 8000
 
-ENTRYPOINT ["entrypoint"]
-CMD ["php-fpm"]
-
-FROM nginx:1.27.5-alpine AS web
-
-WORKDIR /var/www/html
-
-COPY --from=app /var/www/html/public ./public
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD wget -q --spider http://127.0.0.1/up || exit 1
+CMD php artisan serve --host=0.0.0.0 --port=8000
